@@ -10,9 +10,31 @@ export default async function SignupPage() {
   ])
 
   return (
-    <div style={{ padding: "3rem 2rem", maxWidth: 800, margin: "0 auto" }}>
-      <h1>Sign up for WorkNest</h1>
-      <SignupForm tiers={tiers ?? []} locations={locations ?? []} />
+    <div className="flex min-h-screen">
+      <div className="relative hidden w-[45%] lg:block">
+        <img
+          src="https://images.unsplash.com/photo-1700163080760-12c275d3fe36?w=1200&q=80&auto=format&fit=crop"
+          alt="A bright coworking lounge with plants"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute bottom-10 left-10 right-10 text-white">
+          <p className="text-2xl font-semibold leading-snug">
+            &ldquo;Flexible spaces for focused people.&rdquo;
+          </p>
+          <p className="mt-2 text-sm text-white/70">— WorkNest</p>
+        </div>
+        <div className="absolute left-10 top-10 text-lg font-bold text-white">WorkNest</div>
+      </div>
+
+      <div className="flex flex-1 items-center justify-center bg-background px-8 py-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 lg:hidden text-lg font-bold text-foreground">WorkNest</div>
+          <h1 className="mb-1 text-2xl font-bold text-foreground">Create your account</h1>
+          <p className="mb-8 text-sm text-muted">Join WorkNest to start booking spaces.</p>
+          <SignupForm tiers={tiers ?? []} locations={locations ?? []} />
+        </div>
+      </div>
     </div>
   )
 }
