@@ -11,22 +11,41 @@ export default function LoginPage() {
           className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute left-10 top-10 text-lg font-bold text-white">WorkNest</div>
         <div className="absolute bottom-10 left-10 right-10 text-white">
           <p className="text-2xl font-semibold leading-snug">
             &ldquo;A better place to get work done.&rdquo;
           </p>
           <p className="mt-2 text-sm text-white/70">— The WorkNest Way</p>
         </div>
-        <div className="absolute left-10 top-10 text-lg font-bold text-white">WorkNest</div>
       </div>
 
-      {/* Right: form panel */}
-      <div className="flex flex-1 items-center justify-center bg-background px-8">
-        <div>
-          <div className="mb-8 lg:hidden text-lg font-bold text-foreground">WorkNest</div>
-          <h1 className="mb-1 text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="mb-8 text-sm text-muted">Log in to your WorkNest account.</p>
-          <LoginForms />
+      {/* Right: form panel, now filled top to bottom */}
+      <div className="flex flex-1 flex-col justify-between bg-background px-8 py-10 lg:px-16">
+        <div className="mb-8 lg:hidden text-lg font-bold text-foreground">WorkNest</div>
+
+        <div className="flex flex-1 items-center justify-center">
+          <div className="w-full max-w-sm">
+            <h1 className="mb-1 text-2xl font-bold text-foreground">Welcome back</h1>
+            <p className="mb-8 text-sm text-muted">Log in to your WorkNest account.</p>
+            <LoginForms />
+          </div>
+        </div>
+
+        {/* Highlight strip, fills the bottom instead of leaving it empty */}
+        <div className="mx-auto grid w-full max-w-sm grid-cols-3 gap-4 border-t border-border pt-6">
+          <div>
+            <p className="text-xl font-bold text-foreground">3</p>
+            <p className="text-xs text-muted">Locations</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">60+</p>
+            <p className="text-xs text-muted">Resources</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">24/7</p>
+            <p className="text-xs text-muted">Access</p>
+          </div>
         </div>
       </div>
     </div>
