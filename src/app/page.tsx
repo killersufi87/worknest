@@ -1,14 +1,25 @@
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-col items-center gap-4 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          WorkNest
-        </h1>
-        <p className="max-w-md text-zinc-600 dark:text-zinc-400">
-          Booking &amp; Operations Platform. Phase 0 scaffold is live.
-        </p>
-      </main>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+      <h1 className="mb-3 text-4xl font-bold text-foreground">WorkNest</h1>
+      <p className="mb-8 max-w-md text-muted">
+        Spaces for what&rsquo;s next. Book desks, cabins, and meeting rooms across
+        Koramangala, Indiranagar, and HSR.
+      </p>
+      <div className="flex gap-4">
+        <a
+          href="/login"
+          className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+        >
+          Log in
+        </a>
+        <a
+          href="/signup"
+          className="rounded-lg border border-border bg-white px-6 py-2.5 text-sm font-semibold text-foreground hover:bg-black/5"
+        >
+          Sign up
+        </a>
+      </div>
     </div>
   );
 }
