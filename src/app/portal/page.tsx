@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Sidebar from "./Sidebar"
+import CountUp from "./CountUp"
 
 export default async function PortalPage() {
   const supabase = await createClient()
@@ -93,15 +94,15 @@ export default async function PortalPage() {
           {/* Stat row */}
           <div className="mb-10 grid grid-cols-3 gap-8 border-y border-border py-6">
             <div>
-              <p className="text-3xl font-bold text-foreground">{member.remaining_monthly_hours}</p>
+              <p className="text-3xl font-bold text-foreground"><CountUp value={member.remaining_monthly_hours} /></p>
               <p className="text-sm text-muted">Hours remaining</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-foreground">{bookingCount ?? 0}</p>
+              <p className="text-3xl font-bold text-foreground"><CountUp value={bookingCount ?? 0} /></p>
               <p className="text-sm text-muted">Active bookings</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-foreground">1</p>
+              <p className="text-3xl font-bold text-foreground"><CountUp value={1} /></p>
               <p className="text-sm text-muted">Location access</p>
             </div>
           </div>
