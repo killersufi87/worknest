@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Sidebar from "./Sidebar"
+import PortalBackdrop from "./PortalBackdrop"
 import CountUp from "./CountUp"
 
 export default async function PortalPage() {
@@ -38,10 +39,11 @@ export default async function PortalPage() {
   const firstName = member.name.split(" ")[0]
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen bg-background">
       <Sidebar active="dashboard" name={member.name} tierName={tierName} />
+      <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
-      <main className="flex-1">
+      <main className="relative z-10 flex-1">
         {/* Top app bar */}
         <div className="flex items-center justify-between border-b border-border px-10 py-4">
           <input

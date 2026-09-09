@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Sidebar from "../Sidebar"
+import PortalBackdrop from "../PortalBackdrop"
 import BookingWizard from "./BookingWizard"
 
 export default async function BookPage() {
@@ -25,15 +26,19 @@ export default async function BookPage() {
   const tierName = (member.membership_tiers as unknown as { tier_name: string } | null)?.tier_name ?? "Regular"
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen bg-background">
       <Sidebar active="book" name={member.name} tierName={tierName} />
-      <main className="flex-1 px-10 py-10">
+      <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
+
+      <main className="relative z-10 flex-1 px-10 py-10">
         {/* Scrolling ticker */}
-        <div className="mb-8 overflow-hidden whitespace-nowrap rounded-lg bg-[#18181A] py-2.5">
-          <div className="inline-block animate-marquee text-sm text-white/70">
-            {Array(4).fill(
-              "Koramangala · Indiranagar · HSR · Hot Desks · Dedicated Desks · Private Cabins · Meeting Rooms · "
-            ).join("")}
+        <div className="mb-8 overflow-hidden whitespace-nowrap rounded-lg bg-[#18181A] py-3">
+          <div className="inline-flex animate-marquee items-center gap-16 text-sm font-medium text-white/80">
+            {Array(6).fill(0).map((_, i) => (
+              <span key={i} className="shrink-0">
+                Co-working made easy by WorkNest — Book now!!
+              </span>
+            ))}
           </div>
         </div>
 
