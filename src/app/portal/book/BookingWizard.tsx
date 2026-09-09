@@ -92,13 +92,13 @@ export default function BookingWizard({
       {/* Step 1: Location */}
       <div>
         <h2 className="mb-4 text-sm font-semibold text-foreground">1. Select Location</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {locations.map((loc) => (
             <button
               type="button"
               key={loc.location_id}
               onClick={() => setLocationId(loc.location_id)}
-              className={`overflow-hidden rounded-xl border-2 bg-white text-left transition-colors ${
+              className={`min-w-0 overflow-hidden rounded-xl border-2 bg-white text-left transition-colors ${
                 locationId === loc.location_id ? "border-primary" : "border-border"
               }`}
             >
@@ -121,13 +121,13 @@ export default function BookingWizard({
       {/* Step 2: Resource type */}
       <div>
         <h2 className="mb-4 text-sm font-semibold text-foreground">2. Select Resource Type</h2>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {RESOURCE_TYPES.map((rt) => (
             <button
               type="button"
               key={rt.value}
               onClick={() => setResourceType(rt.value)}
-              className={`rounded-xl border-2 bg-white p-4 text-left transition-colors ${
+              className={`min-w-0 rounded-xl border-2 bg-white p-4 text-left transition-colors ${
                 resourceType === rt.value ? "border-primary" : "border-border"
               }`}
             >
