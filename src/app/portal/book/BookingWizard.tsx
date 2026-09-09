@@ -82,7 +82,7 @@ export default function BookingWizard({
   }
 
   return (
-    <form action={bookingAction} className="max-w-3xl space-y-10">
+    <form action={bookingAction} className="space-y-10">
       <input type="hidden" name="location_id" value={locationId ?? ""} />
       <input type="hidden" name="resource_type" value={resourceType ?? ""} />
       <input type="hidden" name="date" value={date} />
