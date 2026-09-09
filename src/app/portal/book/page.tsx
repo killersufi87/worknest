@@ -31,7 +31,6 @@ export default async function BookPage() {
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
 
       <main className="relative z-10 flex-1 px-10 py-10">
-        <div className="mx-auto max-w-4xl">
         {/* Scrolling ticker */}
         <div className="mb-8 overflow-hidden whitespace-nowrap rounded-lg bg-[#18181A] py-3">
           <div className="inline-flex animate-marquee items-center gap-16 text-sm font-medium text-white/80">
@@ -50,7 +49,6 @@ export default async function BookPage() {
           locations={locations ?? []}
           remainingHours={member.remaining_monthly_hours}
         />
-        </div>
       </main>
     </div>
   )
