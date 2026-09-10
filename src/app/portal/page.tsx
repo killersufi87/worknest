@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation"
-import Image from "next/image"
 import { createClient } from "@/lib/supabase/server"
 import Sidebar from "./Sidebar"
 import PortalBackdrop from "./PortalBackdrop"
@@ -98,12 +97,10 @@ export default async function PortalPage() {
               </h1>
             </div>
             <div className="relative hidden h-32 w-56 shrink-0 overflow-hidden rounded-xl md:block">
-              <Image
-                src="https://images.unsplash.com/photo-1758518730083-4c12527b6742?w=500&q=60&auto=format&fit=crop"
+              <img
+                src="https://images.unsplash.com/photo-1758518730083-4c12527b6742?w=500&q=70&auto=format&fit=crop"
                 alt=""
-                fill
-                sizes="224px"
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
@@ -140,12 +137,10 @@ export default async function PortalPage() {
             href="/portal/book"
             className="relative mb-10 flex items-center justify-between overflow-hidden rounded-xl px-8 py-7 text-white transition-opacity hover:opacity-95"
           >
-            <Image
-              src="https://images.unsplash.com/photo-1700163080760-12c275d3fe36?w=900&q=60&auto=format&fit=crop"
+            <img
+              src="https://images.unsplash.com/photo-1700163080760-12c275d3fe36?w=900&q=70&auto=format&fit=crop"
               alt=""
-              fill
-              sizes="100vw"
-              className="object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-black/65" />
             <div className="relative z-10">
@@ -187,12 +182,10 @@ export default async function PortalPage() {
         </div>
 
         <div className="relative h-56 overflow-hidden">
-          <Image
-            src="https://images.unsplash.com/photo-1498049860654-af1a5c566876?w=1200&q=60&auto=format&fit=crop"
+          <img
+            src="https://images.unsplash.com/photo-1498049860654-af1a5c566876?w=1200&q=70&auto=format&fit=crop"
             alt=""
-            fill
-            sizes="100vw"
-            className="object-cover"
+            className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-black/60" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
