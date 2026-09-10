@@ -1,6 +1,7 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { memberIdToEmail, getCurrentRole } from "@/lib/auth/helpers"
@@ -151,6 +152,23 @@ export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect("/login")
+}
+
+export async function updateMemberLocation(locationId: number) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "Not logged in." }
+
+  const { error } = await supabase
+    .from("members")
+    .update({ location_id: locationId })
+    .eq("auth_user_id", user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath("/portal")
+  return { success: true }
 }
 
 /**
