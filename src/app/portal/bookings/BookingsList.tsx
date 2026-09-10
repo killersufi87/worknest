@@ -10,6 +10,7 @@ type Booking = {
   status: string
   amount: number | null
   resource_type: string
+  location_name: string
 }
 
 function CancelButton({ bookingId }: { bookingId: number }) {
@@ -63,7 +64,7 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
           <div>
             <p className="font-medium capitalize text-foreground">{b.resource_type.replace("_", " ")}</p>
             <p className="text-sm text-muted">
-              {new Date(b.start_time).toLocaleString()} · ₹{b.amount ?? 0}
+              {new Date(b.start_time).toLocaleString()} · {b.location_name} · ₹{b.amount ?? 0}
             </p>
           </div>
           <div className="flex items-center gap-4">

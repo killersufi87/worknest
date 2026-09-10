@@ -2,6 +2,7 @@ import { logout } from "@/app/actions/auth"
 
 const NAV = [
   { key: "grid", label: "Live Booking Grid", href: "/admin" },
+  { key: "resources", label: "Manage Resources", href: "/admin/resources" },
   { key: "staffing", label: "Shift & Certifications", href: "/admin/staffing" },
   { key: "analytics", label: "Analytics", href: "/admin/analytics" },
   { key: "invoices", label: "Invoices", href: "/admin/invoices" },

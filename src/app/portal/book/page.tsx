@@ -49,6 +49,7 @@ export default async function BookPage() {
         <BookingWizard
           locations={locations ?? []}
           remainingHours={member.remaining_monthly_hours}
+          tierName={tierName}
         />
         </div>
       </main>

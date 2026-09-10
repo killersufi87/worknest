@@ -35,10 +35,27 @@ export async function signupMember(
 
   const admin = createAdminClient()
 
+  // FR17 requires the tier's free conference-hour allowance to be applied
+  // at signup, not left at the schema default of 0.
+  const { data: tier } = await admin
+    .from("membership_tiers")
+    .select("free_conference_hours_allowance")
+    .eq("tier_id", tierId)
+    .single()
+
+  const renewalDate = new Date()
+  renewalDate.setMonth(renewalDate.getMonth() + 1)
+
   // 1. Create the member row first so we get a database-assigned member_id.
   const { data: memberRow, error: insertError } = await admin
     .from("members")
-    .insert({ name, tier_id: tierId, location_id: locationId })
+    .insert({
+      name,
+      tier_id: tierId,
+      location_id: locationId,
+      remaining_monthly_hours: tier?.free_conference_hours_allowance ?? 0,
+      plan_renewal_date: renewalDate.toISOString().slice(0, 10),
+    })
     .select("member_id")
     .single()
 

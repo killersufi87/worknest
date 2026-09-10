@@ -14,7 +14,7 @@ export default async function PortalPage() {
 
   const { data: member } = await supabase
     .from("members")
-    .select("member_id, name, remaining_monthly_hours, membership_tiers(tier_name), locations(name)")
+    .select("member_id, name, remaining_monthly_hours, plan_renewal_date, membership_tiers(tier_name), locations(name)")
     .eq("auth_user_id", user.id)
     .maybeSingle()
 
@@ -37,6 +37,14 @@ export default async function PortalPage() {
   const tierName = (member.membership_tiers as unknown as { tier_name: string } | null)?.tier_name ?? "Regular"
   const locationName = (member.locations as unknown as { name: string } | null)?.name ?? "—"
   const firstName = member.name.split(" ")[0]
+
+  const tierStyles: Record<string, string> = {
+    Regular: "bg-primary text-primary-foreground",
+    Silver: "bg-[#9CA3AF] text-[#1C1B19]",
+    Gold: "bg-[#D4AF37] text-[#1C1B19]",
+    Platinum: "bg-gradient-to-r from-[#2A2A2E] to-[#4A4A52] text-white",
+  }
+  const bannerClass = tierStyles[tierName] ?? tierStyles.Regular
 
   return (
     <div className="relative flex min-h-screen bg-background">
@@ -83,12 +91,15 @@ export default async function PortalPage() {
           </div>
 
           {/* Tier banner */}
-          <div className="mb-10 flex items-center justify-between rounded-xl bg-primary px-6 py-4 text-primary-foreground">
+          <div className={`mb-10 flex items-center justify-between rounded-xl px-6 py-4 ${bannerClass}`}>
             <div>
               <p className="font-semibold">{tierName} Member</p>
-              <p className="text-sm text-white/70">{locationName}</p>
+              <p className="text-sm opacity-70">
+                {locationName}
+                {member.plan_renewal_date && ` · Renews ${new Date(member.plan_renewal_date).toLocaleDateString()}`}
+              </p>
             </div>
-            <span className="rounded-lg border border-white/30 px-4 py-2 text-sm font-medium">
+            <span className="rounded-lg border border-current/30 px-4 py-2 text-sm font-medium">
               Manage Plan →
             </span>
           </div>

@@ -40,6 +40,22 @@ export default async function StaffingPage() {
     grouped.get(key)!.push(s)
   }
 
+  // FR18: flag any location+date with zero certified staff on shift.
+  const coverageGaps: { date: string; location: string }[] = []
+  const byDateLocation = new Map<string, { certified: number; location: string }>()
+  for (const s of shifts ?? []) {
+    const locName = (s.locations as unknown as { name: string } | null)?.name ?? "—"
+    const key = `${s.shift_date}__${locName}`
+    const existing = byDateLocation.get(key) ?? { certified: 0, location: locName }
+    if (s.certification) existing.certified += 1
+    byDateLocation.set(key, existing)
+  }
+  for (const [key, val] of byDateLocation.entries()) {
+    if (val.certified === 0) {
+      coverageGaps.push({ date: key.split("__")[0], location: val.location })
+    }
+  }
+
   const ROLE_LABELS: Record<string, string> = {
     admin: "Admin",
     manager: "Floor Manager",
@@ -68,6 +84,22 @@ export default async function StaffingPage() {
           ))}
         </div>
 
+        {/* FR18: coverage gap flag */}
+        {coverageGaps.length > 0 && (
+          <div className="mb-10 rounded-xl border border-[--status-booked-fg]/30 bg-[--status-booked-bg] px-5 py-4">
+            <p className="mb-2 text-sm font-semibold text-[--status-booked-fg]">
+              ⚠ {coverageGaps.length} shift{coverageGaps.length > 1 ? "s" : ""} with no certified staff
+            </p>
+            <ul className="space-y-1 text-sm text-[--status-booked-fg]">
+              {coverageGaps.slice(0, 5).map((g) => (
+                <li key={`${g.date}-${g.location}`}>
+                  {new Date(g.date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} — {g.location}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Upcoming shifts, next 14 days */}
         <h2 className="mb-4 text-lg font-semibold text-foreground">Upcoming Shifts (next 14 days)</h2>
         <div className="overflow-hidden rounded-xl border border-border bg-white">
@@ -77,7 +109,7 @@ export default async function StaffingPage() {
                 <th className="px-5 py-3">Date</th>
                 <th className="px-5 py-3">Staff</th>
                 <th className="px-5 py-3">Location</th>
-                <th className="px-5 py-3">Shift</th>
+                <th className="px-5 py-3">Certification</th>
               </tr>
             </thead>
             <tbody>
@@ -91,7 +123,15 @@ export default async function StaffingPage() {
                     <td className="px-5 py-3 text-muted">
                       {(s.locations as unknown as { name: string } | null)?.name}
                     </td>
-                    <td className="px-5 py-3 text-muted">{s.certification}</td>
+                    <td className="px-5 py-3">
+                      {s.certification ? (
+                        <span className="rounded-full bg-[--status-confirmed-bg] px-2.5 py-1 text-xs font-medium text-[--status-confirmed-fg]">
+                          {s.certification}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted">Not certified</span>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}

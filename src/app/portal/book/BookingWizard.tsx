@@ -18,15 +18,29 @@ const RESOURCE_TYPES: { value: ResourceType; label: string; hourly: number }[] =
   { value: "meeting_room", label: "Meeting Room", hourly: 500 },
 ]
 
+// FR9: only resource types included in the member's active plan are
+// selectable. Meeting rooms sit outside plan inclusion since they run on
+// the separate free-hours system (FR17), so every tier can book them.
+// Regular has no monthly plan (pay-per-use per the case study), so it
+// can book any type hourly.
+const TIER_ALLOWED_TYPES: Record<string, ResourceType[]> = {
+  Regular: ["hot_desk", "dedicated_desk", "cabin", "meeting_room"],
+  Silver: ["hot_desk", "meeting_room"],
+  Gold: ["dedicated_desk", "meeting_room"],
+  Platinum: ["cabin", "meeting_room"],
+}
+
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
 const DURATIONS = [1, 2, 4];
 
 export default function BookingWizard({
   locations,
   remainingHours,
+  tierName,
 }: {
   locations: Location[]
   remainingHours: number
+  tierName: string
 }) {
   const [locationId, setLocationId] = useState<number | null>(null)
   const [resourceType, setResourceType] = useState<ResourceType | null>(null)
@@ -122,7 +136,9 @@ export default function BookingWizard({
       <div>
         <h2 className="mb-4 text-sm font-semibold text-foreground">2. Select Resource Type</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {RESOURCE_TYPES.map((rt) => (
+          {RESOURCE_TYPES.filter((rt) =>
+            (TIER_ALLOWED_TYPES[tierName] ?? TIER_ALLOWED_TYPES.Regular).includes(rt.value)
+          ).map((rt) => (
             <button
               type="button"
               key={rt.value}

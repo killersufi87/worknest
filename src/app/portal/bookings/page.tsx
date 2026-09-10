@@ -20,7 +20,7 @@ export default async function BookingsPage() {
 
   const { data: bookingsRaw } = await supabase
     .from("bookings")
-    .select("booking_id, start_time, end_time, status, amount, resources(resource_type)")
+    .select("booking_id, start_time, end_time, status, amount, resources(resource_type, locations(name))")
     .eq("member_id", member.member_id)
     .order("start_time", { ascending: false })
 
@@ -31,6 +31,7 @@ export default async function BookingsPage() {
     status: b.status,
     amount: b.amount,
     resource_type: (b.resources as unknown as { resource_type: string } | null)?.resource_type ?? "resource",
+    location_name: (b.resources as unknown as { locations: { name: string } | null } | null)?.locations?.name ?? "—",
   }))
 
   const tierName = (member.membership_tiers as unknown as { tier_name: string } | null)?.tier_name ?? "Regular"
