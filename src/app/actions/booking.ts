@@ -20,7 +20,7 @@ export async function getAvailability(
 
   const resourceIds = (resources ?? []).map((r) => r.resource_id)
   if (resourceIds.length === 0) {
-    return { totalResources: 0, bookings: [] as { start_time: string; end_time: string }[] }
+    return { resourceIds: [] as number[], bookings: [] as { resource_id: number; start_time: string; end_time: string }[] }
   }
 
   const dayStart = `${dateStr}T00:00:00+00:00`
@@ -28,13 +28,32 @@ export async function getAvailability(
 
   const { data: bookings } = await supabase
     .from("bookings")
-    .select("start_time, end_time")
+    .select("resource_id, start_time, end_time")
     .in("resource_id", resourceIds)
     .eq("status", "confirmed")
     .gte("start_time", dayStart)
     .lte("start_time", dayEnd)
 
-  return { totalResources: resourceIds.length, bookings: bookings ?? [] }
+  return { resourceIds, bookings: bookings ?? [] }
+}
+
+// Live per-resource check, used right before letting a customer lock in a
+// specific seat, so a race between two customers picking the same
+// resource at the same instant is caught before submission.
+export async function checkResourceStillFree(
+  resourceId: number,
+  startIso: string,
+  endIso: string
+) {
+  const supabase = await createClient()
+  const { data: overlapping } = await supabase
+    .from("bookings")
+    .select("booking_id")
+    .eq("resource_id", resourceId)
+    .eq("status", "confirmed")
+    .lt("start_time", endIso)
+    .gt("end_time", startIso)
+  return (overlapping?.length ?? 0) === 0
 }
 
 export type CreateBookingState = { error: string } | { success: true; amount: number } | null
@@ -48,6 +67,7 @@ export async function createBooking(
   const dateStr = String(formData.get("date"))
   const startHour = Number(formData.get("start_hour"))
   const durationHours = Number(formData.get("duration_hours"))
+  const chosenResourceId = formData.get("resource_id") ? Number(formData.get("resource_id")) : null
 
   if (!locationId || !resourceType || !dateStr || !startHour || !durationHours) {
     return { error: "Please complete every step before confirming." }
@@ -69,18 +89,28 @@ export async function createBooking(
   const startTime = new Date(`${dateStr}T${String(startHour).padStart(2, "0")}:00:00+05:30`)
   const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000)
 
-  const { data: candidates } = await supabase
+  const { data: allCandidates } = await supabase
     .from("resources")
     .select("resource_id, resource_pricing(hourly_price)")
     .eq("location_id", locationId)
     .eq("resource_type", resourceType)
     .eq("active", true)
 
-  if (!candidates || candidates.length === 0) {
+  if (!allCandidates || allCandidates.length === 0) {
     return { error: "No resources of this type exist at this location." }
   }
 
-  // Free conference hours apply only to meeting rooms, if the member has enough left.
+  // If the customer picked a specific seat, only try that one — a race
+  // with another customer should surface as a clear error, not silently
+  // hand them a different seat than the one they clicked.
+  const candidates = chosenResourceId
+    ? allCandidates.filter((c) => c.resource_id === chosenResourceId)
+    : allCandidates
+
+  if (chosenResourceId && candidates.length === 0) {
+    return { error: "That seat is no longer available. Please pick another." }
+  }
+
   const useFreeHours =
     resourceType === "meeting_room" && member.remaining_monthly_hours >= durationHours
 
@@ -89,9 +119,6 @@ export async function createBooking(
       ?.hourly_price ?? 0
   const amount = useFreeHours ? 0 : hourlyPrice * durationHours
 
-  // Try each candidate resource in turn. The database's exclusion constraint
-  // (from Phase 1) is the real source of truth for conflicts — if one
-  // resource is taken, we just try the next one instead of failing outright.
   for (const candidate of candidates) {
     const { error: insertError } = await supabase.from("bookings").insert({
       member_id: member.member_id,
@@ -112,11 +139,12 @@ export async function createBooking(
       return { success: true, amount }
     }
 
-    // 23P01 = exclusion constraint violation (double-booking). Try the next one.
     if (!insertError.message.includes("bookings_no_overlap")) {
       return { error: insertError.message }
     }
   }
 
-  return { error: `All ${resourceType.replace("_", " ")}s at this location are booked for that time. Try another slot.` }
+  return chosenResourceId
+    ? { error: "Someone just booked that seat. Please pick another." }
+    : { error: `All ${resourceType.replace("_", " ")}s at this location are booked for that time. Try another slot.` }
 }

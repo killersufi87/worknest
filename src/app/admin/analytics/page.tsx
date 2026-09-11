@@ -2,8 +2,14 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import AdminSidebar from "../AdminSidebar"
 import PortalBackdrop from "../../portal/PortalBackdrop"
+import LocationFilter from "./LocationFilter"
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ location?: string }>
+}) {
+  const { location: locationFilter } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -20,7 +26,7 @@ export default async function AnalyticsPage() {
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
-  const [{ data: bookings }, { data: locations }, { data: resources }] = await Promise.all([
+  const [{ data: bookingsRaw }, { data: locations }, { data: resources }] = await Promise.all([
     supabase
       .from("bookings")
       .select("booking_id, amount, start_time, status, resource_id, resources(resource_type, location_id)")
@@ -30,8 +36,13 @@ export default async function AnalyticsPage() {
     supabase.from("resources").select("resource_id, location_id").eq("active", true),
   ])
 
-  // Revenue by month, last 6 months, matches FR16's acceptance criteria
-  // exactly: chart totals must match the underlying bookings table.
+  // Apply location filter if selected
+  const bookings = locationFilter
+    ? (bookingsRaw ?? []).filter(
+        (b) => String((b.resources as unknown as { location_id: number } | null)?.location_id) === locationFilter
+      )
+    : bookingsRaw ?? []
+
   const monthKeys: string[] = []
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
@@ -39,7 +50,7 @@ export default async function AnalyticsPage() {
     monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
   }
   const revenueByMonth = new Map(monthKeys.map((k) => [k, 0]))
-  for (const b of bookings ?? []) {
+  for (const b of bookings) {
     const key = b.start_time.slice(0, 7)
     if (revenueByMonth.has(key)) {
       revenueByMonth.set(key, (revenueByMonth.get(key) ?? 0) + (b.amount ?? 0))
@@ -47,9 +58,8 @@ export default async function AnalyticsPage() {
   }
   const maxRevenue = Math.max(...revenueByMonth.values(), 1)
 
-  // Revenue + occupancy by location
   const locationStats = (locations ?? []).map((loc) => {
-    const locBookings = (bookings ?? []).filter(
+    const locBookings = bookings.filter(
       (b) => (b.resources as unknown as { location_id: number } | null)?.location_id === loc.location_id
     )
     const revenue = locBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0)
@@ -58,14 +68,21 @@ export default async function AnalyticsPage() {
     return { name: loc.name, revenue, occupancyPct: Math.min(occupancyPct, 100) }
   })
 
-  // Revenue by resource type
-  const typeMap = new Map<string, number>()
-  for (const b of bookings ?? []) {
+  // Bookings by resource type — count-based, "most booked" chart
+  const typeCounts = new Map<string, number>()
+  for (const b of bookings) {
     const type = (b.resources as unknown as { resource_type: string } | null)?.resource_type ?? "other"
-    typeMap.set(type, (typeMap.get(type) ?? 0) + (b.amount ?? 0))
+    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
+  }
+  const maxTypeCount = Math.max(...typeCounts.values(), 1)
+  const TYPE_COLORS: Record<string, string> = {
+    hot_desk: "bg-primary",
+    dedicated_desk: "bg-[#D4AF37]",
+    cabin: "bg-[#9CA3AF]",
+    meeting_room: "bg-[#B0413A]",
   }
 
-  const totalRevenue = (bookings ?? []).reduce((sum, b) => sum + (b.amount ?? 0), 0)
+  const totalRevenue = bookings.reduce((sum, b) => sum + (b.amount ?? 0), 0)
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
@@ -73,8 +90,13 @@ export default async function AnalyticsPage() {
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
 
       <main className="relative z-10 flex-1 px-10 py-10">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Last 6 months</p>
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Revenue &amp; Occupancy Analytics</h1>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Last 6 months</p>
+            <h1 className="text-3xl font-bold text-foreground">Revenue &amp; Occupancy Analytics</h1>
+          </div>
+          <LocationFilter locations={locations ?? []} />
+        </div>
 
         <div className="mb-10 grid grid-cols-2 gap-8 border-y border-border py-6 md:grid-cols-3">
           <div>
@@ -82,7 +104,7 @@ export default async function AnalyticsPage() {
             <p className="text-sm text-muted">Total revenue (6mo)</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-foreground">{bookings?.length ?? 0}</p>
+            <p className="text-3xl font-bold text-foreground">{bookings.length}</p>
             <p className="text-sm text-muted">Total bookings (6mo)</p>
           </div>
           <div>
@@ -92,7 +114,6 @@ export default async function AnalyticsPage() {
         </div>
 
         <div className="mb-10 grid gap-6 lg:grid-cols-2">
-          {/* Revenue by month */}
           <div className="rounded-xl border border-border bg-white p-6">
             <h2 className="mb-5 text-sm font-semibold text-foreground">Revenue by Month</h2>
             <div className="flex h-40 items-end gap-3">
@@ -110,7 +131,6 @@ export default async function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Occupancy by location */}
           <div className="rounded-xl border border-border bg-white p-6">
             <h2 className="mb-5 text-sm font-semibold text-foreground">Occupancy by Location</h2>
             <div className="space-y-4">
@@ -121,10 +141,7 @@ export default async function AnalyticsPage() {
                     <span className="text-foreground">{loc.occupancyPct}%</span>
                   </div>
                   <div className="h-2.5 w-full rounded-full bg-black/[0.06]">
-                    <div
-                      className="h-2.5 rounded-full bg-primary"
-                      style={{ width: `${loc.occupancyPct}%` }}
-                    />
+                    <div className="h-2.5 rounded-full bg-primary" style={{ width: `${loc.occupancyPct}%` }} />
                   </div>
                 </div>
               ))}
@@ -132,19 +149,27 @@ export default async function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Revenue by resource type */}
+        {/* Most-booked resource type — horizontal bar chart */}
         <div className="rounded-xl border border-border bg-white p-6">
-          <h2 className="mb-5 text-sm font-semibold text-foreground">Revenue by Resource Type</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[...typeMap.entries()].map(([type, revenue]) => (
-              <div key={type}>
-                <p className="text-xl font-bold capitalize text-foreground">₹{revenue}</p>
-                <p className="text-xs capitalize text-muted">{type.replace("_", " ")}</p>
-              </div>
-            ))}
-            {typeMap.size === 0 && (
-              <p className="col-span-full text-sm text-muted">No bookings in the last 6 months yet.</p>
-            )}
+          <h2 className="mb-5 text-sm font-semibold text-foreground">Most Booked Resource Type</h2>
+          <div className="space-y-4">
+            {[...typeCounts.entries()]
+              .sort((a, b) => b[1] - a[1])
+              .map(([type, count]) => (
+                <div key={type}>
+                  <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="font-medium capitalize text-foreground">{type.replace("_", " ")}</span>
+                    <span className="text-foreground">{count} bookings</span>
+                  </div>
+                  <div className="h-3 w-full rounded-full bg-black/[0.06]">
+                    <div
+                      className={`h-3 rounded-full ${TYPE_COLORS[type] ?? "bg-primary"}`}
+                      style={{ width: `${(count / maxTypeCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            {typeCounts.size === 0 && <p className="text-sm text-muted">No bookings in this period yet.</p>}
           </div>
         </div>
       </main>
