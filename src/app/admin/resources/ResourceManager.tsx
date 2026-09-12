@@ -13,7 +13,7 @@ type Resource = {
   monthly_price: number | null
 }
 
-function ResourceRow({ resource }: { resource: Resource }) {
+function ResourceRow({ resource, locationName }: { resource: Resource; locationName: string }) {
   const [minDuration, setMinDuration] = useState(resource.min_booking_duration_minutes)
   const [hourly, setHourly] = useState(resource.hourly_price ?? 0)
   const [monthly, setMonthly] = useState(resource.monthly_price ?? 0)
@@ -28,6 +28,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
 
   return (
     <tr className="border-b border-border last:border-0">
+      <td className="px-4 py-3 text-muted">{locationName}</td>
       <td className="px-4 py-3 font-medium capitalize text-foreground">
         {resource.resource_type.replace("_", " ")}
       </td>
@@ -75,7 +76,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
   )
 }
 
-export default function ResourceManager({ resources }: { resources: Resource[] }) {
+export default function ResourceManager({ resources, locationName }: { resources: Resource[]; locationName: string }) {
   const [addState, addAction, addPending] = useActionState(addResource, null)
 
   return (
@@ -84,6 +85,7 @@ export default function ResourceManager({ resources }: { resources: Resource[] }
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
             <tr>
+              <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Capacity</th>
               <th className="px-4 py-3">Min. Duration</th>
@@ -94,7 +96,7 @@ export default function ResourceManager({ resources }: { resources: Resource[] }
           </thead>
           <tbody>
             {resources.map((r) => (
-              <ResourceRow key={r.resource_id} resource={r} />
+              <ResourceRow key={r.resource_id} resource={r} locationName={locationName} />
             ))}
           </tbody>
         </table>

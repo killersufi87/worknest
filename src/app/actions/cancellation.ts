@@ -65,5 +65,7 @@ export async function cancelBooking(
 
   revalidatePath("/portal/bookings")
   revalidatePath("/portal")
+  revalidatePath("/admin/analytics")
+  revalidatePath("/admin")
   return { success: true, refundPct }
 }

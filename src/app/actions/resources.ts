@@ -19,6 +19,15 @@ async function getMyLocation() {
   return employee?.location_id ?? null
 }
 
+// Resource/pricing changes need to show up everywhere that reads them,
+// not just the management screen itself.
+function revalidateResourceDependents() {
+  revalidatePath("/admin/resources")
+  revalidatePath("/portal/book")
+  revalidatePath("/admin")
+  revalidatePath("/admin/analytics")
+}
+
 export type ResourceFormState = { error: string } | { success: true } | null
 
 // FR3: add a resource for the admin's own location.
@@ -55,7 +64,7 @@ export async function addResource(
     monthly_price: monthlyPrice,
   })
 
-  revalidatePath("/admin/resources")
+  revalidateResourceDependents()
   return { success: true }
 }
 
@@ -64,7 +73,7 @@ export async function addResource(
 export async function removeResource(resourceId: number) {
   const supabase = await createClient()
   await supabase.from("resources").update({ active: false }).eq("resource_id", resourceId)
-  revalidatePath("/admin/resources")
+  revalidateResourceDependents()
 }
 
 // FR4: update minimum booking duration for a resource.
@@ -74,7 +83,7 @@ export async function updateMinDuration(resourceId: number, minutes: number) {
     .from("resources")
     .update({ min_booking_duration_minutes: minutes })
     .eq("resource_id", resourceId)
-  revalidatePath("/admin/resources")
+  revalidateResourceDependents()
 }
 
 // FR5: update hourly/monthly pricing for a resource.
@@ -98,5 +107,5 @@ export async function updatePricing(resourceId: number, hourlyPrice: number, mon
       .from("resource_pricing")
       .insert({ resource_id: resourceId, hourly_price: hourlyPrice, monthly_price: monthlyPrice })
   }
-  revalidatePath("/admin/resources")
+  revalidateResourceDependents()
 }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { completePastBookings } from "@/app/actions/booking"
 import AdminSidebar from "../AdminSidebar"
 import PortalBackdrop from "../../portal/PortalBackdrop"
 import LocationFilter from "./LocationFilter"
@@ -23,10 +24,12 @@ export default async function AnalyticsPage({
     .maybeSingle()
   if (!employee) redirect("/login")
 
+  await completePastBookings()
+
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
-  const [{ data: bookingsRaw }, { data: locations }, { data: resources }] = await Promise.all([
+  const [{ data: bookingsRaw }, { data: locations }, { data: resources }, { count: completedCount }] = await Promise.all([
     supabase
       .from("bookings")
       .select("booking_id, amount, start_time, status, resource_id, resources(resource_type, location_id)")
@@ -34,6 +37,7 @@ export default async function AnalyticsPage({
       .gte("start_time", sixMonthsAgo.toISOString()),
     supabase.from("locations").select("location_id, name").order("location_id"),
     supabase.from("resources").select("resource_id, location_id").eq("active", true),
+    supabase.from("bookings").select("booking_id", { count: "exact", head: true }).eq("status", "completed"),
   ])
 
   // Apply location filter if selected
@@ -108,8 +112,8 @@ export default async function AnalyticsPage({
             <p className="text-sm text-muted">Total bookings (6mo)</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-foreground">{locations?.length ?? 0}</p>
-            <p className="text-sm text-muted">Locations tracked</p>
+            <p className="text-3xl font-bold text-foreground">{completedCount ?? 0}</p>
+            <p className="text-sm text-muted">Bookings completed</p>
           </div>
         </div>
 

@@ -32,5 +32,12 @@ export async function submitHelpQuery(
   if (error) return { error: error.message }
 
   revalidatePath("/portal/help")
+  revalidatePath("/admin/help")
   return { success: true }
+}
+
+export async function resolveHelpQuery(queryId: number) {
+  const supabase = await createClient()
+  await supabase.from("help_queries").update({ status: "resolved" }).eq("query_id", queryId)
+  revalidatePath("/admin/help")
 }

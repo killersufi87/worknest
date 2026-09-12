@@ -6,6 +6,7 @@ const NAV = [
   { key: "staffing", label: "Shift & Certifications", href: "/admin/staffing" },
   { key: "analytics", label: "Analytics", href: "/admin/analytics" },
   { key: "invoices", label: "Invoices", href: "/admin/invoices" },
+  { key: "help", label: "Help Queries", href: "/admin/help" },
 ]
 
 export default function AdminSidebar({ active, name }: { active: string; name: string }) {

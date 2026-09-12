@@ -251,7 +251,7 @@ export default function BookingWizard({
                       ? "border-primary bg-primary text-white"
                       : available
                       ? "border-border bg-white text-foreground hover:border-primary"
-                      : "cursor-not-allowed border-border bg-black/5 text-muted line-through"
+                      : "cursor-not-allowed border-[--status-booked-fg]/40 bg-[--status-booked-bg] text-[--status-booked-fg]"
                   }`}
                 >
                   {h > 12 ? h - 12 : h}:00 {h >= 12 ? "PM" : "AM"}

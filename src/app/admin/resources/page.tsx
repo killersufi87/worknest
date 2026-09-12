@@ -48,7 +48,7 @@ export default async function ResourcesPage() {
       <main className="relative z-10 flex-1 px-10 py-10">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{locationName}</p>
         <h1 className="mb-8 text-3xl font-bold text-foreground">Manage Resources &amp; Pricing</h1>
-        <ResourceManager resources={resources} />
+        <ResourceManager resources={resources} locationName={locationName} />
       </main>
     </div>
   )

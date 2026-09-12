@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { completePastBookings } from "@/app/actions/booking"
 import Sidebar from "./Sidebar"
 import PortalBackdrop from "./PortalBackdrop"
 import TopBar from "./TopBar"
@@ -21,8 +22,10 @@ export default async function PortalPage() {
 
   if (!member) redirect("/login")
 
+  await completePastBookings()
+
   // Parallelize everything that doesn't depend on each other.
-  const [{ data: bookings }, { count: bookingCount }, { data: locations }, { data: recentCancellations }] =
+  const [{ data: bookings }, { count: bookingCount }, { count: completedCount }, { data: locations }, { data: recentCancellations }] =
     await Promise.all([
       supabase
         .from("bookings")
@@ -36,6 +39,11 @@ export default async function PortalPage() {
         .select("booking_id", { count: "exact", head: true })
         .eq("member_id", member.member_id)
         .eq("status", "confirmed"),
+      supabase
+        .from("bookings")
+        .select("booking_id", { count: "exact", head: true })
+        .eq("member_id", member.member_id)
+        .eq("status", "completed"),
       supabase.from("locations").select("location_id, name").order("location_id"),
       supabase
         .from("cancellation_refunds")
@@ -128,8 +136,8 @@ export default async function PortalPage() {
               <p className="text-sm text-muted">Active bookings</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-foreground"><CountUp value={1} /></p>
-              <p className="text-sm text-muted">Location access</p>
+              <p className="text-3xl font-bold text-foreground"><CountUp value={completedCount ?? 0} /></p>
+              <p className="text-sm text-muted">Bookings completed</p>
             </div>
           </div>
 

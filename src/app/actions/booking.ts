@@ -1,8 +1,21 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 
 export type ResourceType = "hot_desk" | "dedicated_desk" | "cabin" | "meeting_room"
+
+// Bookings don't have a background job flipping them to 'completed' once
+// their time has passed — this runs that transition lazily whenever a
+// page that cares about booking status loads. Cheap, no infra needed.
+export async function completePastBookings() {
+  const supabase = await createClient()
+  await supabase
+    .from("bookings")
+    .update({ status: "completed" })
+    .eq("status", "confirmed")
+    .lt("end_time", new Date().toISOString())
+}
 
 export async function getAvailability(
   locationId: number,
@@ -136,6 +149,10 @@ export async function createBooking(
           .update({ remaining_monthly_hours: member.remaining_monthly_hours - durationHours })
           .eq("member_id", member.member_id)
       }
+      revalidatePath("/admin/analytics")
+      revalidatePath("/admin")
+      revalidatePath("/portal")
+      revalidatePath("/portal/bookings")
       return { success: true, amount }
     }
 
