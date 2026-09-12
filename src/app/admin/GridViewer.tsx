@@ -101,8 +101,8 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
             {availableCount} of {availability.resourceIds.length} available at this time
           </p>
           <div className="mb-3 flex items-center gap-4 text-xs text-muted">
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[--status-confirmed-bg] border border-[--status-confirmed-fg]" /> Available</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[--status-booked-bg] border border-[--status-booked-fg]" /> Booked</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-confirmed-bg)] border border-[var(--status-confirmed-fg)]" /> Available</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-booked-bg)] border border-[var(--status-booked-fg)]" /> Booked</span>
           </div>
           <div className="flex flex-wrap gap-3">
             {availability.resourceIds.map((rid, idx) => {
@@ -113,8 +113,8 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
                   title={`Seat ${idx + 1}${booked ? " — booked" : " — available"}`}
                   className={`flex h-16 w-16 flex-col items-center justify-center rounded-xl border-2 text-2xl ${
                     booked
-                      ? "border-[--status-booked-fg]/40 bg-[--status-booked-bg]"
-                      : "border-[--status-confirmed-fg]/40 bg-[--status-confirmed-bg]"
+                      ? "border-[var(--status-booked-fg)]/40 bg-[var(--status-booked-bg)]"
+                      : "border-[var(--status-confirmed-fg)]/40 bg-[var(--status-confirmed-bg)]"
                   }`}
                 >
                   {icon}

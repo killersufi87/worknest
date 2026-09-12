@@ -175,7 +175,7 @@ export default async function PortalPage() {
                       </p>
                       <p className="text-sm text-muted">{new Date(b.start_time).toLocaleString()}</p>
                     </div>
-                    <span className="rounded-full bg-[--status-confirmed-bg] px-3 py-1 text-xs font-medium text-[--status-confirmed-fg]">
+                    <span className="rounded-full bg-[var(--status-confirmed-bg)] px-3 py-1 text-xs font-medium text-[var(--status-confirmed-fg)]">
                       Confirmed
                     </span>
                   </div>

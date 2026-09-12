@@ -30,6 +30,7 @@ export async function getAvailability(
     .eq("location_id", locationId)
     .eq("resource_type", resourceType)
     .eq("active", true)
+    .order("resource_id", { ascending: true })
 
   const resourceIds = (resources ?? []).map((r) => r.resource_id)
   if (resourceIds.length === 0) {
@@ -80,10 +81,10 @@ export async function createBooking(
   const dateStr = String(formData.get("date"))
   const startHour = Number(formData.get("start_hour"))
   const durationHours = Number(formData.get("duration_hours"))
-  const chosenResourceId = formData.get("resource_id") ? Number(formData.get("resource_id")) : null
+  const chosenResourceId = Number(formData.get("resource_id"))
 
-  if (!locationId || !resourceType || !dateStr || !startHour || !durationHours) {
-    return { error: "Please complete every step before confirming." }
+  if (!locationId || !resourceType || !dateStr || !startHour || !durationHours || !chosenResourceId) {
+    return { error: "Please pick a specific seat before confirming." }
   }
 
   const supabase = await createClient()
@@ -102,25 +103,19 @@ export async function createBooking(
   const startTime = new Date(`${dateStr}T${String(startHour).padStart(2, "0")}:00:00+05:30`)
   const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000)
 
-  const { data: allCandidates } = await supabase
+  // Only ever look up and book the exact resource the customer clicked.
+  // No fallback to "any available candidate" — that ambiguity was the
+  // root cause of seats not mapping reliably to what was shown on screen.
+  const { data: resource } = await supabase
     .from("resources")
     .select("resource_id, resource_pricing(hourly_price)")
+    .eq("resource_id", chosenResourceId)
     .eq("location_id", locationId)
     .eq("resource_type", resourceType)
     .eq("active", true)
+    .maybeSingle()
 
-  if (!allCandidates || allCandidates.length === 0) {
-    return { error: "No resources of this type exist at this location." }
-  }
-
-  // If the customer picked a specific seat, only try that one — a race
-  // with another customer should surface as a clear error, not silently
-  // hand them a different seat than the one they clicked.
-  const candidates = chosenResourceId
-    ? allCandidates.filter((c) => c.resource_id === chosenResourceId)
-    : allCandidates
-
-  if (chosenResourceId && candidates.length === 0) {
+  if (!resource) {
     return { error: "That seat is no longer available. Please pick another." }
   }
 
@@ -128,40 +123,36 @@ export async function createBooking(
     resourceType === "meeting_room" && member.remaining_monthly_hours >= durationHours
 
   const hourlyPrice =
-    (candidates[0].resource_pricing as unknown as { hourly_price: number }[] | null)?.[0]
-      ?.hourly_price ?? 0
+    (resource.resource_pricing as unknown as { hourly_price: number }[] | null)?.[0]?.hourly_price ?? 0
   const amount = useFreeHours ? 0 : hourlyPrice * durationHours
 
-  for (const candidate of candidates) {
-    const { error: insertError } = await supabase.from("bookings").insert({
-      member_id: member.member_id,
-      resource_id: candidate.resource_id,
-      start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(),
-      status: "confirmed",
-      amount,
-    })
+  const { error: insertError } = await supabase.from("bookings").insert({
+    member_id: member.member_id,
+    resource_id: resource.resource_id,
+    start_time: startTime.toISOString(),
+    end_time: endTime.toISOString(),
+    status: "confirmed",
+    amount,
+  })
 
-    if (!insertError) {
-      if (useFreeHours) {
-        await supabase
-          .from("members")
-          .update({ remaining_monthly_hours: member.remaining_monthly_hours - durationHours })
-          .eq("member_id", member.member_id)
-      }
-      revalidatePath("/admin/analytics")
-      revalidatePath("/admin")
-      revalidatePath("/portal")
-      revalidatePath("/portal/bookings")
-      return { success: true, amount }
+  if (!insertError) {
+    if (useFreeHours) {
+      await supabase
+        .from("members")
+        .update({ remaining_monthly_hours: member.remaining_monthly_hours - durationHours })
+        .eq("member_id", member.member_id)
     }
-
-    if (!insertError.message.includes("bookings_no_overlap")) {
-      return { error: insertError.message }
-    }
+    revalidatePath("/admin/analytics")
+    revalidatePath("/admin")
+    revalidatePath("/portal")
+    revalidatePath("/portal/bookings")
+    return { success: true, amount }
   }
 
-  return chosenResourceId
-    ? { error: "Someone just booked that seat. Please pick another." }
-    : { error: `All ${resourceType.replace("_", " ")}s at this location are booked for that time. Try another slot.` }
+  // 23P01 = exclusion constraint violation — the database itself caught
+  // a genuine double-booking attempt on this exact resource and time.
+  if (insertError.message.includes("bookings_no_overlap")) {
+    return { error: "Someone just booked that seat. Please pick another." }
+  }
+  return { error: insertError.message }
 }

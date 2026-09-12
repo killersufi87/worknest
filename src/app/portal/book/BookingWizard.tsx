@@ -110,7 +110,7 @@ export default function BookingWizard({
   if (bookingState && "success" in bookingState) {
     return (
       <div className="max-w-lg rounded-xl border border-border bg-white p-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[--status-confirmed-bg] text-2xl text-[--status-confirmed-fg]">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--status-confirmed-bg)] text-2xl text-[var(--status-confirmed-fg)]">
           ✓
         </div>
         <h2 className="mb-2 text-xl font-semibold text-foreground">Booking confirmed</h2>
@@ -195,7 +195,7 @@ export default function BookingWizard({
           ))}
         </div>
         {resourceType === "meeting_room" && remainingHours > 0 && (
-          <p className="mt-2 text-xs text-[--status-confirmed-fg]">
+          <p className="mt-2 text-xs text-[var(--status-confirmed-fg)]">
             You have {remainingHours} free hours remaining this month.
           </p>
         )}
@@ -251,7 +251,7 @@ export default function BookingWizard({
                       ? "border-primary bg-primary text-white"
                       : available
                       ? "border-border bg-white text-foreground hover:border-primary"
-                      : "cursor-not-allowed border-[--status-booked-fg]/40 bg-[--status-booked-bg] text-[--status-booked-fg]"
+                      : "cursor-not-allowed border-[var(--status-booked-fg)]/40 bg-[var(--status-booked-bg)] text-[var(--status-booked-fg)]"
                   }`}
                 >
                   {h > 12 ? h - 12 : h}:00 {h >= 12 ? "PM" : "AM"}
@@ -267,9 +267,9 @@ export default function BookingWizard({
         <div>
           <h2 className="mb-4 text-sm font-semibold text-foreground">4. Pick Your Seat</h2>
           <div className="mb-3 flex items-center gap-4 text-xs text-muted">
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[--status-confirmed-bg] border border-[--status-confirmed-fg]" /> Available</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[--status-booked-bg] border border-[--status-booked-fg]" /> Booked</span>
-            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[--status-partial-bg] border border-[--status-partial-fg]" /> Selected</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-confirmed-bg)] border border-[var(--status-confirmed-fg)]" /> Available</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-booked-bg)] border border-[var(--status-booked-fg)]" /> Booked</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-partial-bg)] border border-[var(--status-partial-fg)]" /> Selected</span>
           </div>
           <div className="flex flex-wrap gap-3">
             {availability.resourceIds.map((rid, idx) => {
@@ -285,12 +285,12 @@ export default function BookingWizard({
                   title={`Seat ${idx + 1}`}
                   className={`flex h-16 w-16 flex-col items-center justify-center rounded-xl border-2 text-2xl transition-colors ${
                     isConflict
-                      ? "border-[--status-partial-fg] bg-[--status-partial-bg]"
+                      ? "border-[var(--status-partial-fg)] bg-[var(--status-partial-bg)]"
                       : isSelected
                       ? "border-primary bg-primary/10"
                       : isAvailable
-                      ? "border-[--status-confirmed-fg]/40 bg-[--status-confirmed-bg] hover:border-primary"
-                      : "cursor-not-allowed border-[--status-booked-fg]/30 bg-[--status-booked-bg] opacity-60"
+                      ? "border-[var(--status-confirmed-fg)]/40 bg-[var(--status-confirmed-bg)] hover:border-primary"
+                      : "cursor-not-allowed border-[var(--status-booked-fg)]/30 bg-[var(--status-booked-bg)] opacity-60"
                   }`}
                 >
                   {icon}
@@ -300,7 +300,7 @@ export default function BookingWizard({
             })}
           </div>
           {conflictResourceId && (
-            <p className="mt-3 text-sm text-[--status-partial-fg]">
+            <p className="mt-3 text-sm text-[var(--status-partial-fg)]">
               ⚠ Someone else is booking that seat right now. Please select another.
             </p>
           )}

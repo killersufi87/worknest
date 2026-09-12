@@ -18,7 +18,7 @@ function CancelButton({ bookingId }: { bookingId: number }) {
 
   if (state && "success" in state) {
     return (
-      <span className="text-xs text-[--status-confirmed-fg]">
+      <span className="text-xs text-[var(--status-confirmed-fg)]">
         Cancelled · {state.refundPct}% refunded
       </span>
     )
@@ -40,9 +40,9 @@ function CancelButton({ bookingId }: { bookingId: number }) {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  confirmed: "bg-[--status-confirmed-bg] text-[--status-confirmed-fg]",
-  cancelled: "bg-[--status-booked-bg] text-[--status-booked-fg]",
-  completed: "bg-[--status-upcoming-bg] text-[--status-upcoming-fg]",
+  confirmed: "bg-[var(--status-confirmed-bg)] text-[var(--status-confirmed-fg)]",
+  cancelled: "bg-[var(--status-booked-bg)] text-[var(--status-booked-fg)]",
+  completed: "bg-[var(--status-upcoming-bg)] text-[var(--status-upcoming-fg)]",
 }
 
 export default function BookingsList({ bookings }: { bookings: Booking[] }) {

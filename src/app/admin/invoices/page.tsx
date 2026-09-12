@@ -77,7 +77,7 @@ export default async function InvoicesPage() {
                     <td className="px-5 py-3 capitalize text-muted">{b.status}</td>
                     <td className="px-5 py-3 text-right text-foreground">
                       ₹{b.amount ?? 0}
-                      {refund != null && <span className="ml-2 text-xs text-[--status-confirmed-fg]">(₹{refund} refunded)</span>}
+                      {refund != null && <span className="ml-2 text-xs text-[var(--status-confirmed-fg)]">(₹{refund} refunded)</span>}
                     </td>
                   </tr>
                 )

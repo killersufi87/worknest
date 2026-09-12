@@ -58,8 +58,8 @@ export default function ShiftFinder({ locations }: { locations: Location[] }) {
       </div>
 
       {noCoverage && (
-        <div className="mb-6 rounded-xl border border-[--status-booked-fg]/30 bg-[--status-booked-bg] px-5 py-4">
-          <p className="text-sm font-semibold text-[--status-booked-fg]">
+        <div className="mb-6 rounded-xl border border-[var(--status-booked-fg)]/30 bg-[var(--status-booked-bg)] px-5 py-4">
+          <p className="text-sm font-semibold text-[var(--status-booked-fg)]">
             ⚠ No process-certified staff working this location on this date.
           </p>
         </div>
@@ -81,9 +81,9 @@ export default function ShiftFinder({ locations }: { locations: Location[] }) {
                 <td className="px-5 py-3 text-muted">{ROLE_LABELS[s.role] ?? s.role}</td>
                 <td className="px-5 py-3">
                   {s.certification ? (
-                    <span className="rounded-full bg-[--status-confirmed-bg] px-2.5 py-1 text-xs font-medium text-[--status-confirmed-fg]">Yes</span>
+                    <span className="rounded-full bg-[var(--status-confirmed-bg)] px-2.5 py-1 text-xs font-medium text-[var(--status-confirmed-fg)]">Yes</span>
                   ) : (
-                    <span className="rounded-full bg-[--status-booked-bg] px-2.5 py-1 text-xs font-medium text-[--status-booked-fg]">No</span>
+                    <span className="rounded-full bg-[var(--status-booked-bg)] px-2.5 py-1 text-xs font-medium text-[var(--status-booked-fg)]">No</span>
                   )}
                 </td>
               </tr>

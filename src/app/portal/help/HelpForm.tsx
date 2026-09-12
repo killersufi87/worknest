@@ -31,7 +31,7 @@ export default function HelpForm() {
         {pending ? "Submitting…" : "Submit query"}
       </button>
       {state && "error" in state && <p className="text-sm text-red-600">{state.error}</p>}
-      {state && "success" in state && <p className="text-sm text-[--status-confirmed-fg]">Query submitted!</p>}
+      {state && "success" in state && <p className="text-sm text-[var(--status-confirmed-fg)]">Query submitted!</p>}
     </form>
   )
 }

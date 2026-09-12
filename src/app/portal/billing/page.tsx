@@ -81,7 +81,7 @@ export default async function BillingPage() {
                       <td className="px-5 py-3 text-right text-foreground">
                         ₹{b.amount ?? 0}
                         {refund && (
-                          <span className="ml-2 text-xs text-[--status-confirmed-fg]">
+                          <span className="ml-2 text-xs text-[var(--status-confirmed-fg)]">
                             (₹{refund.refund_amount} refunded)
                           </span>
                         )}

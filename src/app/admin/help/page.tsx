@@ -48,8 +48,8 @@ export default async function AdminHelpPage() {
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
                       q.status === "open"
-                        ? "bg-[--status-booked-bg] text-[--status-booked-fg]"
-                        : "bg-[--status-confirmed-bg] text-[--status-confirmed-fg]"
+                        ? "bg-[var(--status-booked-bg)] text-[var(--status-booked-fg)]"
+                        : "bg-[var(--status-confirmed-bg)] text-[var(--status-confirmed-fg)]"
                     }`}
                   >
                     {q.status}
