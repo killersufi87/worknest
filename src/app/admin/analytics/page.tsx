@@ -5,6 +5,23 @@ import AdminSidebar from "../AdminSidebar"
 import PortalBackdrop from "../../portal/PortalBackdrop"
 import LocationFilter from "./LocationFilter"
 
+const TYPE_LABELS: Record<string, string> = {
+  hot_desk: "Hot Desk",
+  dedicated_desk: "Dedicated Desk",
+  cabin: "Private Cabin",
+  meeting_room: "Meeting Room",
+}
+
+const TYPE_COLORS = ["#2F4A3C", "#6B8F71", "#B8CDB5", "#D7A65D"]
+
+function currency(value: number) {
+  return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`
+}
+
+function hoursBetween(start: string, end: string) {
+  return Math.max(0, (new Date(end).getTime() - new Date(start).getTime()) / 3600000)
+}
+
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -12,174 +29,165 @@ export default async function AnalyticsPage({
 }) {
   const { location: locationFilter, resource: resourceFilter, from: fromFilter, to: toFilter } = await searchParams
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: employee } = await supabase
-    .from("employees")
-    .select("employee_id, name")
-    .eq("auth_user_id", user.id)
-    .maybeSingle()
+  const { data: employee } = await supabase.from("employees").select("employee_id, name").eq("auth_user_id", user.id).maybeSingle()
   if (!employee) redirect("/login")
 
   await completePastBookings()
-
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
-  const [{ data: bookingsRaw }, { data: locations }, { data: resources }, { count: completedCount }] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("booking_id, amount, start_time, status, resource_id, resources(resource_type, location_id)")
+  const [{ data: bookingsRaw }, { data: locations }, { data: resources }, { count: activeMemberCount }] = await Promise.all([
+    supabase.from("bookings")
+      .select("booking_id, amount, start_time, end_time, status, resource_id, resources(resource_type, location_id, locations(name))")
       .neq("status", "cancelled")
       .gte("start_time", sixMonthsAgo.toISOString()),
     supabase.from("locations").select("location_id, name").order("location_id"),
     supabase.from("resources").select("resource_id, location_id").eq("active", true),
-    supabase.from("bookings").select("booking_id", { count: "exact", head: true }).eq("status", "completed"),
+    supabase.from("members").select("member_id", { count: "exact", head: true }).eq("status", "active"),
   ])
 
-  // Apply location filter if selected
-  const bookings = (bookingsRaw ?? []).filter((b) => {
-    const resource = b.resources as unknown as { location_id: number; resource_type: string } | null
-    const date = b.start_time.slice(0, 10)
-    return (
-      (!locationFilter || String(resource?.location_id) === locationFilter) &&
-      (!resourceFilter || resource?.resource_type === resourceFilter) &&
-      (!fromFilter || date >= fromFilter) &&
-      (!toFilter || date <= toFilter)
-    )
+  const bookings = (bookingsRaw ?? []).filter((booking) => {
+    const resource = booking.resources as unknown as { location_id: number; resource_type: string } | null
+    const date = booking.start_time.slice(0, 10)
+    return (!locationFilter || String(resource?.location_id) === locationFilter)
+      && (!resourceFilter || resource?.resource_type === resourceFilter)
+      && (!fromFilter || date >= fromFilter)
+      && (!toFilter || date <= toFilter)
+  })
+
+  const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.amount ?? 0), 0)
+  const totalHours = bookings.reduce((sum, booking) => sum + hoursBetween(booking.start_time, booking.end_time), 0)
+  const completed = bookings.filter((booking) => booking.status === "completed").length
+  const typeCounts = new Map<string, number>()
+  bookings.forEach((booking) => {
+    const type = (booking.resources as unknown as { resource_type: string } | null)?.resource_type ?? "other"
+    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
   })
 
   const monthKeys: string[] = []
   for (let i = 5; i >= 0; i--) {
-    const d = new Date()
-    d.setMonth(d.getMonth() - i)
-    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
+    const date = new Date()
+    date.setMonth(date.getMonth() - i)
+    monthKeys.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`)
   }
-  const revenueByMonth = new Map(monthKeys.map((k) => [k, 0]))
-  for (const b of bookings) {
-    const key = b.start_time.slice(0, 7)
-    if (revenueByMonth.has(key)) {
-      revenueByMonth.set(key, (revenueByMonth.get(key) ?? 0) + (b.amount ?? 0))
-    }
-  }
-  const maxRevenue = Math.max(...revenueByMonth.values(), 1)
+  const monthlyRevenue = monthKeys.map((key) => bookings
+    .filter((booking) => booking.start_time.slice(0, 7) === key)
+    .reduce((sum, booking) => sum + (booking.amount ?? 0), 0))
+  const maxMonthlyRevenue = Math.max(...monthlyRevenue, 1)
 
-  const locationStats = (locations ?? []).map((loc) => {
-    const locBookings = bookings.filter(
-      (b) => (b.resources as unknown as { location_id: number } | null)?.location_id === loc.location_id
-    )
-    const revenue = locBookings.reduce((sum, b) => sum + (b.amount ?? 0), 0)
-    const totalResources = (resources ?? []).filter((r) => r.location_id === loc.location_id).length
-    const occupancyPct = totalResources > 0 ? Math.round((locBookings.length / totalResources) * 100) : 0
-    return { name: loc.name, revenue, occupancyPct: Math.min(occupancyPct, 100) }
+  const locationStats = (locations ?? []).map((location) => {
+    const locationBookings = bookings.filter((booking) =>
+      (booking.resources as unknown as { location_id: number } | null)?.location_id === location.location_id)
+    const resourceCount = (resources ?? []).filter((resource) => resource.location_id === location.location_id).length
+    const occupiedHours = locationBookings.reduce((sum, booking) => sum + hoursBetween(booking.start_time, booking.end_time), 0)
+    const occupancy = resourceCount ? Math.min(Math.round((occupiedHours / (resourceCount * 12 * 30)) * 100), 100) : 0
+    return { name: location.name, occupancy, revenue: locationBookings.reduce((sum, booking) => sum + (booking.amount ?? 0), 0) }
   })
-
-  // Bookings by resource type — count-based, "most booked" chart
-  const typeCounts = new Map<string, number>()
-  for (const b of bookings) {
-    const type = (b.resources as unknown as { resource_type: string } | null)?.resource_type ?? "other"
-    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
-  }
-  const maxTypeCount = Math.max(...typeCounts.values(), 1)
-  const TYPE_COLORS: Record<string, string> = {
-    hot_desk: "bg-primary",
-    dedicated_desk: "bg-[#D4AF37]",
-    cabin: "bg-[#9CA3AF]",
-    meeting_room: "bg-[#B0413A]",
-  }
-
-  const totalRevenue = bookings.reduce((sum, b) => sum + (b.amount ?? 0), 0)
+  const averageOccupancy = locationStats.length
+    ? Math.round(locationStats.reduce((sum, location) => sum + location.occupancy, 0) / locationStats.length)
+    : 0
+  const revenuePoints = monthlyRevenue.map((value, index) => {
+    const x = 8 + (index * 84) / Math.max(monthlyRevenue.length - 1, 1)
+    const y = 94 - (value / maxMonthlyRevenue) * 76
+    return `${x},${y}`
+  }).join(" ")
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
       <AdminSidebar active="analytics" name={employee.name} />
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
-
-      <main className="relative z-10 flex-1 px-10 py-10">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Last 6 months</p>
-            <h1 className="text-3xl font-bold text-foreground">Revenue &amp; Occupancy Analytics</h1>
-          </div>
-          <LocationFilter locations={locations ?? []} />
-        </div>
-
-        <div className="mb-10 grid grid-cols-2 gap-8 border-y border-border py-6 md:grid-cols-3">
-          <div>
-            <p className="text-3xl font-bold text-foreground">₹{totalRevenue}</p>
-            <p className="text-sm text-muted">Total revenue (6mo)</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-foreground">{bookings.length}</p>
-            <p className="text-sm text-muted">Total bookings (6mo)</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-foreground">{completedCount ?? 0}</p>
-            <p className="text-sm text-muted">Bookings completed</p>
-          </div>
-        </div>
-
-        <div className="mb-10 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-xl border border-border bg-white p-6">
-            <h2 className="mb-5 text-sm font-semibold text-foreground">Revenue by Month</h2>
-            <div className="flex h-40 items-end gap-3">
-              {monthKeys.map((key) => {
-                const value = revenueByMonth.get(key) ?? 0
-                const height = Math.max((value / maxRevenue) * 130, value > 0 ? 6 : 2)
-                const label = new Date(key + "-01").toLocaleDateString(undefined, { month: "short" })
-                return (
-                  <div key={key} className="flex flex-1 flex-col items-center gap-2">
-                    <div className="w-full rounded-sm bg-primary" style={{ height }} />
-                    <p className="text-xs text-muted">{label}</p>
-                  </div>
-                )
-              })}
+      <main className="relative z-10 flex-1 px-6 py-8 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted">Operational insights</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics Overview</h1>
+              <p className="mt-1 text-sm text-muted">Bookings and resources only · Last 6 months</p>
             </div>
+            <LocationFilter locations={locations ?? []} />
           </div>
 
-          <div className="rounded-xl border border-border bg-white p-6">
-            <h2 className="mb-5 text-sm font-semibold text-foreground">Occupancy by Location</h2>
-            <div className="space-y-4">
-              {locationStats.map((loc) => (
-                <div key={loc.name}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium text-foreground">{loc.name}</span>
-                    <span className="text-foreground">{loc.occupancyPct}%</span>
-                  </div>
-                  <div className="h-2.5 w-full rounded-full bg-black/[0.06]">
-                    <div className="h-2.5 rounded-full bg-primary" style={{ width: `${loc.occupancyPct}%` }} />
-                  </div>
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {[
+              ["Total bookings", bookings.length.toLocaleString("en-IN"), "All confirmed and completed"],
+              ["Total revenue", currency(totalRevenue), "From booking amounts"],
+              ["Hours booked", `${totalHours.toFixed(1)} hrs`, "Reserved workspace time"],
+              ["Avg. occupancy", `${averageOccupancy}%`, "Across active locations"],
+              ["Active members", (activeMemberCount ?? 0).toLocaleString("en-IN"), "Current member records"],
+            ].map(([label, value, note], index) => (
+              <div key={label} className="rounded-2xl border border-border bg-white p-4 shadow-[0_8px_24px_rgba(47,74,60,0.06)]">
+                <div className={`mb-4 flex h-9 w-9 items-center justify-center rounded-xl text-lg ${["bg-[#E4EFE7]", "bg-[#E8F1E8]", "bg-[#FBF0D9]", "bg-[#E9E6F4]", "bg-[#FBE3E1]"][index]}`}>
+                  {["▣", "₹", "◷", "%", "♙"][index]}
                 </div>
-              ))}
-            </div>
+                <p className="text-xs font-medium text-muted">{label}</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+                <p className="mt-1 text-[11px] text-muted">{note}</p>
+              </div>
+            ))}
           </div>
-        </div>
 
-        {/* Most-booked resource type — horizontal bar chart */}
-        <div className="rounded-xl border border-border bg-white p-6">
-          <h2 className="mb-5 text-sm font-semibold text-foreground">Most Booked Resource Type</h2>
-          <div className="space-y-4">
-            {[...typeCounts.entries()]
-              .sort((a, b) => b[1] - a[1])
-              .map(([type, count]) => (
-                <div key={type}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-medium capitalize text-foreground">{type.replace("_", " ")}</span>
-                    <span className="text-foreground">{count} bookings</span>
+          <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+            <section className="rounded-2xl border border-border bg-white p-5 shadow-[0_8px_24px_rgba(47,74,60,0.05)]">
+              <div className="mb-4 flex items-center justify-between">
+                <div><h2 className="font-semibold text-foreground">Revenue over time</h2><p className="text-xs text-muted">Monthly booking revenue</p></div>
+                <span className="rounded-full bg-[#E4EFE7] px-3 py-1 text-xs font-medium text-primary">{currency(totalRevenue)}</span>
+              </div>
+              <svg viewBox="0 0 100 106" className="h-56 w-full overflow-visible" role="img" aria-label="Revenue over the last six months">
+                {[18, 43, 68, 94].map((y) => <line key={y} x1="8" x2="92" y1={y} y2={y} stroke="#E5E1DA" strokeWidth="0.5" />)}
+                <polyline points={revenuePoints} fill="none" stroke="#2F4A3C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                {monthlyRevenue.map((value, index) => {
+                  const x = 8 + (index * 84) / Math.max(monthlyRevenue.length - 1, 1)
+                  const y = 94 - (value / maxMonthlyRevenue) * 76
+                  return <circle key={monthKeys[index]} cx={x} cy={y} r="2.1" fill="#6B8F71" stroke="white" strokeWidth="1" />
+                })}
+              </svg>
+              <div className="flex justify-between text-[11px] text-muted">
+                {monthKeys.map((key) => <span key={key}>{new Date(`${key}-01`).toLocaleDateString("en-IN", { month: "short" })}</span>)}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-border bg-white p-5 shadow-[0_8px_24px_rgba(47,74,60,0.05)]">
+              <h2 className="font-semibold text-foreground">Occupancy by location</h2>
+              <p className="mb-6 text-xs text-muted">Reserved hours against available capacity</p>
+              <div className="space-y-5">
+                {locationStats.map((location) => (
+                  <div key={location.name}>
+                    <div className="mb-2 flex justify-between text-sm"><span className="font-medium">{location.name}</span><span className="text-muted">{location.occupancy}%</span></div>
+                    <div className="h-2.5 rounded-full bg-[#EEF1EC]"><div className="h-2.5 rounded-full bg-[#6B8F71]" style={{ width: `${location.occupancy}%` }} /></div>
+                    <p className="mt-1 text-[11px] text-muted">{currency(location.revenue)} revenue</p>
                   </div>
-                  <div className="h-3 w-full rounded-full bg-black/[0.06]">
-                    <div
-                      className={`h-3 rounded-full ${TYPE_COLORS[type] ?? "bg-primary"}`}
-                      style={{ width: `${(count / maxTypeCount) * 100}%` }}
-                    />
-                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-border bg-white p-5 shadow-[0_8px_24px_rgba(47,74,60,0.05)]">
+              <h2 className="font-semibold text-foreground">Bookings by resource type</h2>
+              <p className="mb-5 text-xs text-muted">Distribution of confirmed and completed bookings</p>
+              <div className="flex items-center gap-6">
+                <div className="relative h-36 w-36 shrink-0 rounded-full" style={{ background: `conic-gradient(${TYPE_COLORS.map((color, index) => `${color} 0 ${(Array.from(typeCounts.values()).slice(0, index + 1).reduce((a, b) => a + b, 0) / Math.max(bookings.length, 1)) * 360}deg`).join(", ")})` }}>
+                  <div className="absolute inset-7 flex items-center justify-center rounded-full bg-white text-center"><span className="text-xl font-bold">{bookings.length}</span></div>
                 </div>
-              ))}
-            {typeCounts.size === 0 && <p className="text-sm text-muted">No bookings in this period yet.</p>}
+                <div className="space-y-2 text-xs">
+                  {[...typeCounts.entries()].sort((a, b) => b[1] - a[1]).map(([type, count], index) => (
+                    <div key={type} className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: TYPE_COLORS[index % TYPE_COLORS.length] }} /><span className="capitalize text-muted">{TYPE_LABELS[type] ?? type}</span><strong className="ml-auto text-foreground">{count}</strong></div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-border bg-white p-5 shadow-[0_8px_24px_rgba(47,74,60,0.05)]">
+              <div className="mb-5 flex items-center justify-between"><div><h2 className="font-semibold text-foreground">Most booked resources</h2><p className="text-xs text-muted">Ranked by booking count</p></div><span className="text-xs text-muted">{completed} completed</span></div>
+              <div className="space-y-4">
+                {[...typeCounts.entries()].sort((a, b) => b[1] - a[1]).map(([type, count], index) => (
+                  <div key={type}><div className="mb-1 flex justify-between text-sm"><span className="capitalize">{TYPE_LABELS[type] ?? type}</span><span className="text-muted">{count}</span></div><div className="h-3 rounded-full bg-[#EEF1EC]"><div className="h-3 rounded-full" style={{ width: `${(count / Math.max(...typeCounts.values(), 1)) * 100}%`, background: TYPE_COLORS[index % TYPE_COLORS.length] }} /></div></div>
+                ))}
+              </div>
+            </section>
           </div>
+          <p className="mt-6 rounded-xl border border-[#DCE8DC] bg-[#F1F7F0] px-4 py-3 text-xs text-primary">ⓘ Analytics are computed from existing bookings, resources, locations, and active members. No additional business data is introduced.</p>
         </div>
       </main>
     </div>
