@@ -45,7 +45,7 @@ export default async function AnalyticsPage({
       .neq("status", "cancelled")
       .gte("start_time", sixMonthsAgo.toISOString()),
     supabase.from("locations").select("location_id, name").order("location_id"),
-    supabase.from("resources").select("resource_id, location_id").eq("active", true),
+    supabase.from("resources").select("resource_id, resource_type, capacity_tier, location_id, locations(name)").eq("active", true),
     supabase.from("members").select("member_id", { count: "exact", head: true }).eq("status", "active"),
   ])
 
@@ -62,10 +62,27 @@ export default async function AnalyticsPage({
   const totalHours = bookings.reduce((sum, booking) => sum + hoursBetween(booking.start_time, booking.end_time), 0)
   const completed = bookings.filter((booking) => booking.status === "completed").length
   const typeCounts = new Map<string, number>()
+  const resourceCounts = new Map<number, number>()
   bookings.forEach((booking) => {
     const type = (booking.resources as unknown as { resource_type: string } | null)?.resource_type ?? "other"
     typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
+    resourceCounts.set(booking.resource_id, (resourceCounts.get(booking.resource_id) ?? 0) + 1)
   })
+  const resourceStats = [...resourceCounts.entries()]
+    .map(([resourceId, count]) => {
+      const resource = (resources ?? []).find((item) => item.resource_id === resourceId) as
+        | { resource_id: number; resource_type: string; capacity_tier: string | null; locations: { name: string } | null }
+        | undefined
+      return {
+        resourceId,
+        count,
+        label: `${TYPE_LABELS[resource?.resource_type ?? ""] ?? "Resource"} #${resourceId}`,
+        location: resource?.locations?.name ?? "Unknown location",
+        capacity: resource?.capacity_tier,
+      }
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
 
   const monthKeys: string[] = []
   for (let i = 5; i >= 0; i--) {
@@ -90,8 +107,8 @@ export default async function AnalyticsPage({
     ? Math.round(locationStats.reduce((sum, location) => sum + location.occupancy, 0) / locationStats.length)
     : 0
   const revenuePoints = monthlyRevenue.map((value, index) => {
-    const x = 8 + (index * 84) / Math.max(monthlyRevenue.length - 1, 1)
-    const y = 94 - (value / maxMonthlyRevenue) * 76
+    const x = 20 + (index * 560) / Math.max(monthlyRevenue.length - 1, 1)
+    const y = 172 - (value / maxMonthlyRevenue) * 144
     return `${x},${y}`
   }).join(" ")
 
@@ -135,16 +152,16 @@ export default async function AnalyticsPage({
                 <div><h2 className="font-semibold text-foreground">Revenue over time</h2><p className="text-xs text-muted">Monthly booking revenue</p></div>
                 <span className="rounded-full bg-[#E4EFE7] px-3 py-1 text-xs font-medium text-primary">{currency(totalRevenue)}</span>
               </div>
-              <svg viewBox="0 0 100 106" className="h-56 w-full overflow-visible" role="img" aria-label="Revenue over the last six months">
-                {[18, 43, 68, 94].map((y) => <line key={y} x1="8" x2="92" y1={y} y2={y} stroke="#E5E1DA" strokeWidth="0.5" />)}
+              <svg viewBox="0 0 600 220" preserveAspectRatio="none" className="h-56 w-full overflow-visible" role="img" aria-label="Revenue over the last six months">
+                {[28, 76, 124, 172].map((y) => <line key={y} x1="20" x2="580" y1={y} y2={y} stroke="#E5E1DA" strokeWidth="1" />)}
                 <polyline points={revenuePoints} fill="none" stroke="#2F4A3C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                 {monthlyRevenue.map((value, index) => {
-                  const x = 8 + (index * 84) / Math.max(monthlyRevenue.length - 1, 1)
-                  const y = 94 - (value / maxMonthlyRevenue) * 76
+                  const x = 20 + (index * 560) / Math.max(monthlyRevenue.length - 1, 1)
+                  const y = 172 - (value / maxMonthlyRevenue) * 144
                   return <circle key={monthKeys[index]} cx={x} cy={y} r="2.1" fill="#6B8F71" stroke="white" strokeWidth="1" />
                 })}
               </svg>
-              <div className="flex justify-between text-[11px] text-muted">
+              <div className="flex justify-between px-1 text-[11px] text-muted">
                 {monthKeys.map((key) => <span key={key}>{new Date(`${key}-01`).toLocaleDateString("en-IN", { month: "short" })}</span>)}
               </div>
             </section>
@@ -181,8 +198,16 @@ export default async function AnalyticsPage({
             <section className="rounded-2xl border border-border bg-white p-5 shadow-[0_8px_24px_rgba(47,74,60,0.05)]">
               <div className="mb-5 flex items-center justify-between"><div><h2 className="font-semibold text-foreground">Most booked resources</h2><p className="text-xs text-muted">Ranked by booking count</p></div><span className="text-xs text-muted">{completed} completed</span></div>
               <div className="space-y-4">
-                {[...typeCounts.entries()].sort((a, b) => b[1] - a[1]).map(([type, count], index) => (
-                  <div key={type}><div className="mb-1 flex justify-between text-sm"><span className="capitalize">{TYPE_LABELS[type] ?? type}</span><span className="text-muted">{count}</span></div><div className="h-3 rounded-full bg-[#EEF1EC]"><div className="h-3 rounded-full" style={{ width: `${(count / Math.max(...typeCounts.values(), 1)) * 100}%`, background: TYPE_COLORS[index % TYPE_COLORS.length] }} /></div></div>
+                {resourceStats.map((resource, index) => (
+                  <div key={resource.resourceId}>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span>{resource.label} · {resource.location}{resource.capacity ? ` · ${resource.capacity}` : ""}</span>
+                      <span className="text-muted">{resource.count}</span>
+                    </div>
+                    <div className="h-3 rounded-full bg-[#EEF1EC]">
+                      <div className="h-3 rounded-full" style={{ width: `${(resource.count / Math.max(resourceStats[0]?.count ?? 1, 1)) * 100}%`, background: TYPE_COLORS[index % TYPE_COLORS.length] }} />
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>
