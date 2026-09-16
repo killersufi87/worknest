@@ -26,7 +26,7 @@ export async function getAvailability(
 
   const { data: resources } = await supabase
     .from("resources")
-    .select("resource_id")
+    .select("resource_id, capacity_tier, min_booking_duration_minutes, resource_pricing(hourly_price)")
     .eq("location_id", locationId)
     .eq("resource_type", resourceType)
     .eq("active", true)
@@ -34,7 +34,7 @@ export async function getAvailability(
 
   const resourceIds = (resources ?? []).map((r) => r.resource_id)
   if (resourceIds.length === 0) {
-    return { resourceIds: [] as number[], bookings: [] as { resource_id: number; start_time: string; end_time: string }[] }
+    return { resources: [], resourceIds: [] as number[], bookings: [] as { resource_id: number; start_time: string; end_time: string }[] }
   }
 
   const dayStart = `${dateStr}T00:00:00+00:00`
@@ -48,7 +48,16 @@ export async function getAvailability(
     .gte("start_time", dayStart)
     .lte("start_time", dayEnd)
 
-  return { resourceIds, bookings: bookings ?? [] }
+  return {
+    resources: (resources ?? []).map((resource) => ({
+      resourceId: resource.resource_id,
+      capacityTier: resource.capacity_tier,
+      minDurationMinutes: resource.min_booking_duration_minutes,
+      hourlyPrice: (resource.resource_pricing as unknown as { hourly_price: number }[] | null)?.[0]?.hourly_price ?? 0,
+    })),
+    resourceIds,
+    bookings: bookings ?? [],
+  }
 }
 
 // Live per-resource check, used right before letting a customer lock in a

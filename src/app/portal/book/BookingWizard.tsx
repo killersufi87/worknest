@@ -49,7 +49,16 @@ export default function BookingWizard({
   const [conflictResourceId, setConflictResourceId] = useState<number | null>(null)
   const [liveCatalog, setLiveCatalog] = useState(catalog)
 
-  const [availability, setAvailability] = useState<{ resourceIds: number[]; bookings: { resource_id: number; start_time: string; end_time: string }[] } | null>(null)
+  const [availability, setAvailability] = useState<{
+    resources: {
+      resourceId: number
+      capacityTier: string | null
+      minDurationMinutes: number
+      hourlyPrice: number
+    }[]
+    resourceIds: number[]
+    bookings: { resource_id: number; start_time: string; end_time: string }[]
+  } | null>(null)
   const [, startTransition] = useTransition()
 
   const [bookingState, bookingAction, bookingPending] = useActionState(createBooking, null)
@@ -137,6 +146,7 @@ export default function BookingWizard({
   const allowedDurations = DURATIONS.filter((d) => d >= minimumHours)
 
   const effectiveDuration = duration >= minimumHours ? duration : (allowedDurations[0] ?? minimumHours)
+  const selectedResource = availability?.resources.find((resource) => resource.resourceId === selectedResourceId)
 
   if (bookingState && "success" in bookingState) {
     return (
@@ -326,7 +336,7 @@ export default function BookingWizard({
             <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-partial-bg)] border border-[var(--status-partial-fg)]" /> Selected</span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {availability.resourceIds.map((rid, idx) => {
+            {availability.resourceIds.map((rid) => {
               const isAvailable = seatStatus.get(rid) ?? false
               const isSelected = selectedResourceId === rid
               const isConflict = conflictResourceId === rid
@@ -336,7 +346,7 @@ export default function BookingWizard({
                   key={rid}
                   disabled={!isAvailable && !isConflict}
                   onClick={() => handleSelectSeat(rid)}
-                  title={`Seat ${idx + 1}`}
+                  title={`Resource ${rid}`}
                   className={`flex h-16 w-16 flex-col items-center justify-center rounded-xl border-2 text-2xl transition-colors ${
                     isConflict
                       ? "border-[var(--status-partial-fg)] bg-[var(--status-partial-bg)]"
@@ -348,7 +358,7 @@ export default function BookingWizard({
                   }`}
                 >
                   {icon}
-                  <span className="text-[10px] text-muted">{idx + 1}</span>
+                  <span className="text-[10px] text-muted">#{rid}</span>
                 </button>
               )
             })}
@@ -363,6 +373,16 @@ export default function BookingWizard({
 
       {startHour && selectedResourceId && (
         <div className="rounded-xl border border-border bg-white p-5">
+          {selectedResource && (
+            <div className="mb-4 rounded-lg bg-primary/5 p-3 text-sm">
+              <p className="font-semibold text-foreground">Resource #{selectedResource.resourceId}</p>
+              <div className="mt-2 grid gap-1 text-muted sm:grid-cols-3">
+                <span>₹{selectedResource.hourlyPrice.toFixed(2)}/hr</span>
+                <span>Minimum {selectedResource.minDurationMinutes} minutes</span>
+                <span>Capacity: {selectedResource.capacityTier ?? "Standard"}</span>
+              </div>
+            </div>
+          )}
           <p className="mb-4 text-sm text-foreground">
             ✓ Looks good! This seat is available and meets the minimum booking duration.
           </p>

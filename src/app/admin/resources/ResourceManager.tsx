@@ -28,6 +28,7 @@ function ResourceRow({ resource, locationName }: { resource: Resource; locationN
 
   return (
     <tr className="border-b border-border last:border-0">
+      <td className="px-4 py-3 font-mono text-xs text-muted">#{resource.resource_id}</td>
       <td className="px-4 py-3 text-muted">{locationName}</td>
       <td className="px-4 py-3 font-medium capitalize text-foreground">
         {resource.resource_type.replace("_", " ")}
@@ -85,6 +86,7 @@ export default function ResourceManager({ resources, locationName }: { resources
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
             <tr>
+              <th className="px-4 py-3">Resource ID</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Capacity</th>
