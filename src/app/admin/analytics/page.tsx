@@ -158,7 +158,11 @@ export default async function AnalyticsPage({
                 {monthlyRevenue.map((value, index) => {
                   const x = 20 + (index * 560) / Math.max(monthlyRevenue.length - 1, 1)
                   const y = 172 - (value / maxMonthlyRevenue) * 144
-                  return <circle key={monthKeys[index]} cx={x} cy={y} r="2.1" fill="#6B8F71" stroke="white" strokeWidth="1" />
+                  return (
+                    <circle key={monthKeys[index]} cx={x} cy={y} r="4.5" fill="#6B8F71" stroke="white" strokeWidth="1.5" className="cursor-pointer">
+                      <title>{new Date(`${monthKeys[index]}-01`).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}: {currency(value)}</title>
+                    </circle>
+                  )
                 })}
               </svg>
               <div className="flex justify-between px-1 text-[11px] text-muted">
@@ -184,8 +188,31 @@ export default async function AnalyticsPage({
               <h2 className="font-semibold text-foreground">Bookings by resource type</h2>
               <p className="mb-5 text-xs text-muted">Distribution of confirmed and completed bookings</p>
               <div className="flex items-center gap-6">
-                <div className="relative h-36 w-36 shrink-0 rounded-full" style={{ background: `conic-gradient(${TYPE_COLORS.map((color, index) => `${color} 0 ${(Array.from(typeCounts.values()).slice(0, index + 1).reduce((a, b) => a + b, 0) / Math.max(bookings.length, 1)) * 360}deg`).join(", ")})` }}>
-                  <div className="absolute inset-7 flex items-center justify-center rounded-full bg-white text-center"><span className="text-xl font-bold">{bookings.length}</span></div>
+                <div className="relative h-36 w-36 shrink-0" role="img" aria-label="Bookings by resource type">
+                  <svg viewBox="0 0 42 42" className="-rotate-90">
+                    <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#EEF1EC" strokeWidth="8" />
+                    {[...typeCounts.entries()].sort((a, b) => b[1] - a[1]).reduce<{ type: string; count: number; offset: number }[]>((segments, [type, count]) => {
+                      const previous = segments[segments.length - 1]
+                      segments.push({ type, count, offset: previous ? previous.offset + previous.count : 0 })
+                      return segments
+                    }, []).map(({ type, count, offset }, index) => (
+                      <circle
+                        key={type}
+                        cx="21"
+                        cy="21"
+                        r="15.9155"
+                        fill="none"
+                        stroke={TYPE_COLORS[index % TYPE_COLORS.length]}
+                        strokeWidth="8"
+                        strokeDasharray={`${(count / Math.max(bookings.length, 1)) * 100} ${100 - (count / Math.max(bookings.length, 1)) * 100}`}
+                        strokeDashoffset={-offset / Math.max(bookings.length, 1) * 100}
+                        className="cursor-pointer transition-[stroke-width] hover:stroke-[9]"
+                      >
+                        <title>{TYPE_LABELS[type] ?? type}: {count} bookings ({Math.round((count / Math.max(bookings.length, 1)) * 100)}%)</title>
+                      </circle>
+                    ))}
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center"><span className="text-xl font-bold">{bookings.length}</span></div>
                 </div>
                 <div className="space-y-2 text-xs">
                   {[...typeCounts.entries()].sort((a, b) => b[1] - a[1]).map(([type, count], index) => (
