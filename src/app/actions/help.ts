@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export type HelpState = { error: string } | { success: true } | null
 
@@ -53,12 +54,23 @@ export async function resolveHelpQuery(
 
   const { data: employee } = await supabase
     .from("employees")
-    .select("employee_id")
+    .select("employee_id, location_id")
     .eq("auth_user_id", user.id)
     .maybeSingle()
   if (!employee) return { error: "Admin access required." }
 
-  const { error } = await supabase
+  const admin = createAdminClient()
+  const { data: query } = await admin
+    .from("help_queries")
+    .select("query_id, members(location_id)")
+    .eq("query_id", queryId)
+    .maybeSingle()
+  const queryMember = query?.members as unknown as { location_id: number } | null
+  if (!queryMember || queryMember.location_id !== employee.location_id) {
+    return { error: "You cannot resolve a query outside your location." }
+  }
+
+  const { error } = await admin
     .from("help_queries")
     .update({ status: "resolved" })
     .eq("query_id", queryId)

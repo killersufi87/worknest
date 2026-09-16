@@ -83,7 +83,7 @@ export default function BookingWizard({
   function isSlotAvailable(hour: number): boolean {
     if (!availability) return true
     const slotStart = new Date(`${date}T${String(hour).padStart(2, "0")}:00:00+05:30`)
-    const slotEnd = new Date(slotStart.getTime() + duration * 60 * 60 * 1000)
+    const slotEnd = new Date(slotStart.getTime() + effectiveDuration * 60 * 60 * 1000)
     const bookedResourceIds = new Set(
       availability.bookings
         .filter((b) => {
@@ -101,7 +101,7 @@ export default function BookingWizard({
     const statusMap = new Map<number, boolean>()
     if (!availability || !startHour) return statusMap
     const slotStart = new Date(`${date}T${String(startHour).padStart(2, "0")}:00:00+05:30`)
-    const slotEnd = new Date(slotStart.getTime() + duration * 60 * 60 * 1000)
+    const slotEnd = new Date(slotStart.getTime() + effectiveDuration * 60 * 60 * 1000)
     const bookedResourceIds = new Set(
       availability.bookings
         .filter((b) => {
@@ -120,7 +120,7 @@ export default function BookingWizard({
   async function handleSelectSeat(resourceId: number) {
     if (!startHour) return
     const slotStart = new Date(`${date}T${String(startHour).padStart(2, "0")}:00:00+05:30`)
-    const slotEnd = new Date(slotStart.getTime() + duration * 60 * 60 * 1000)
+    const slotEnd = new Date(slotStart.getTime() + effectiveDuration * 60 * 60 * 1000)
     const stillFree = await checkResourceStillFree(resourceId, slotStart.toISOString(), slotEnd.toISOString())
     if (!stillFree) {
       setConflictResourceId(resourceId)
@@ -136,14 +136,7 @@ export default function BookingWizard({
   const minimumHours = selectedCatalog ? Math.ceil(selectedCatalog.minDurationMinutes / 60) : 1
   const allowedDurations = DURATIONS.filter((d) => d >= minimumHours)
 
-  useEffect(() => {
-    if (duration < minimumHours) {
-      setDuration(allowedDurations[0] ?? minimumHours)
-      setStartHour(null)
-      setSelectedResourceId(null)
-      setConflictResourceId(null)
-    }
-  }, [duration, minimumHours, allowedDurations])
+  const effectiveDuration = duration >= minimumHours ? duration : (allowedDurations[0] ?? minimumHours)
 
   if (bookingState && "success" in bookingState) {
     return (
@@ -177,7 +170,7 @@ export default function BookingWizard({
       <input type="hidden" name="resource_type" value={resourceType ?? ""} />
       <input type="hidden" name="date" value={date} />
       <input type="hidden" name="start_hour" value={startHour ?? ""} />
-      <input type="hidden" name="duration_hours" value={duration} />
+      <input type="hidden" name="duration_hours" value={effectiveDuration} />
       <input type="hidden" name="resource_id" value={selectedResourceId ?? ""} />
 
       {/* Step 1: Location */}
@@ -280,7 +273,7 @@ export default function BookingWizard({
               className="rounded-lg border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary"
             />
             <select
-              value={duration}
+              value={effectiveDuration}
               onChange={(e) => {
                 setDuration(Number(e.target.value))
                 setStartHour(null)
