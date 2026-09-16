@@ -141,7 +141,7 @@ export async function loginEmployee(
   const supabase = await createClient()
   let email = identifier
   if (!identifier.includes("@")) {
-    const { data: employee } = await supabase
+    const { data: employee } = await createAdminClient()
       .from("employees")
       .select("email")
       .eq("employee_id", Number(identifier))
