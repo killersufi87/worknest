@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import Sidebar from "../Sidebar"
 import PortalBackdrop from "../PortalBackdrop"
 import BookingWizard from "./BookingWizard"
+import { getResourceCatalog } from "@/app/actions/resources"
 
 export default async function BookPage() {
   const supabase = await createClient()
@@ -22,6 +23,8 @@ export default async function BookPage() {
     .from("locations")
     .select("location_id, name, address")
     .order("location_id")
+
+  const catalog = await getResourceCatalog()
 
   const tierName = (member.membership_tiers as unknown as { tier_name: string } | null)?.tier_name ?? "Regular"
 
@@ -49,6 +52,7 @@ export default async function BookPage() {
         <BookingWizard
           locations={locations ?? []}
           remainingHours={member.remaining_monthly_hours}
+          catalog={catalog}
         />
         </div>
       </main>

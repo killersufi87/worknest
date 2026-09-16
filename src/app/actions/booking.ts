@@ -70,7 +70,10 @@ export async function checkResourceStillFree(
   return (overlapping?.length ?? 0) === 0
 }
 
-export type CreateBookingState = { error: string } | { success: true; amount: number } | null
+export type CreateBookingState =
+  | { error: string }
+  | { success: true; amount: number; bookingId: number; resourceType: ResourceType; startTime: string; endTime: string }
+  | null
 
 export async function createBooking(
   _prev: CreateBookingState,
@@ -108,7 +111,7 @@ export async function createBooking(
   // root cause of seats not mapping reliably to what was shown on screen.
   const { data: resource } = await supabase
     .from("resources")
-    .select("resource_id, resource_pricing(hourly_price)")
+    .select("resource_id, min_booking_duration_minutes, resource_pricing(hourly_price)")
     .eq("resource_id", chosenResourceId)
     .eq("location_id", locationId)
     .eq("resource_type", resourceType)
@@ -119,34 +122,47 @@ export async function createBooking(
     return { error: "That seat is no longer available. Please pick another." }
   }
 
-  const useFreeHours =
-    resourceType === "meeting_room" && member.remaining_monthly_hours >= durationHours
+  const minimumDurationHours = Math.ceil(resource.min_booking_duration_minutes / 60)
+  if (durationHours < minimumDurationHours) {
+    return { error: `This resource requires a minimum booking of ${resource.min_booking_duration_minutes} minutes.` }
+  }
 
   const hourlyPrice =
     (resource.resource_pricing as unknown as { hourly_price: number }[] | null)?.[0]?.hourly_price ?? 0
-  const amount = useFreeHours ? 0 : hourlyPrice * durationHours
+  const freeHoursApplied =
+    resourceType === "meeting_room"
+      ? Math.min(Number(member.remaining_monthly_hours), durationHours)
+      : 0
+  const amount = hourlyPrice * (durationHours - freeHoursApplied)
 
-  const { error: insertError } = await supabase.from("bookings").insert({
+  const { data: insertedBooking, error: insertError } = await supabase.from("bookings").insert({
     member_id: member.member_id,
     resource_id: resource.resource_id,
     start_time: startTime.toISOString(),
     end_time: endTime.toISOString(),
     status: "confirmed",
     amount,
-  })
+  }).select("booking_id").single()
 
   if (!insertError) {
-    if (useFreeHours) {
+    if (freeHoursApplied > 0) {
       await supabase
         .from("members")
-        .update({ remaining_monthly_hours: member.remaining_monthly_hours - durationHours })
+        .update({ remaining_monthly_hours: member.remaining_monthly_hours - freeHoursApplied })
         .eq("member_id", member.member_id)
     }
     revalidatePath("/admin/analytics")
     revalidatePath("/admin")
     revalidatePath("/portal")
     revalidatePath("/portal/bookings")
-    return { success: true, amount }
+    return {
+      success: true,
+      amount,
+      bookingId: insertedBooking.booking_id,
+      resourceType,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+    }
   }
 
   // 23P01 = exclusion constraint violation — the database itself caught

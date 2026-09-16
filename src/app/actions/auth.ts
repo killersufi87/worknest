@@ -124,22 +124,34 @@ export async function loginMember(
 }
 
 /**
- * Employee login: employees already have a real email column in the
- * schema, so this is a direct, ordinary email + password sign-in.
+ * Employee login accepts the employee ID documented in the test plan and
+ * keeps email as a compatibility fallback for existing seeded accounts.
  */
 export async function loginEmployee(
   _prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "").trim()
+  const identifier = String(formData.get("employee_id") ?? formData.get("email") ?? "").trim()
   const password = String(formData.get("password") ?? "")
 
-  if (!email || !password) {
-    return { error: "Email and password are required." }
+  if (!identifier || !password) {
+    return { error: "Employee ID and password are required." }
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  let email = identifier
+  if (!identifier.includes("@")) {
+    const { data: employee } = await supabase
+      .from("employees")
+      .select("email")
+      .eq("employee_id", Number(identifier))
+      .maybeSingle()
+    email = employee?.email ?? ""
+  }
+
+  const { error } = email
+    ? await supabase.auth.signInWithPassword({ email, password })
+    : { error: new Error("Employee not found") }
 
   if (error) {
     return { error: "Invalid email or password." }

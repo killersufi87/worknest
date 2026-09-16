@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useActionState, useTransition } from "react"
 import { getAvailability, checkResourceStillFree, createBooking, type ResourceType } from "@/app/actions/booking"
+import { getResourceCatalog, type ResourceCatalogItem } from "@/app/actions/resources"
 
 type Location = { location_id: number; name: string; address: string | null }
 
@@ -11,11 +12,11 @@ const LOCATION_IMAGES: Record<string, string> = {
   HSR: "photo-1758518730083-4c12527b6742",
 }
 
-const RESOURCE_TYPES: { value: ResourceType; label: string; hourly: number; icon: string }[] = [
-  { value: "hot_desk", label: "Hot Desk", hourly: 150, icon: "🪑" },
-  { value: "dedicated_desk", label: "Dedicated Desk", hourly: 300, icon: "💺" },
-  { value: "cabin", label: "Private Cabin", hourly: 600, icon: "🚪" },
-  { value: "meeting_room", label: "Meeting Room", hourly: 500, icon: "🧑‍🤝‍🧑" },
+const RESOURCE_TYPES: { value: ResourceType; label: string; icon: string }[] = [
+  { value: "hot_desk", label: "Hot Desk", icon: "🪑" },
+  { value: "dedicated_desk", label: "Dedicated Desk", icon: "💺" },
+  { value: "cabin", label: "Private Cabin", icon: "🚪" },
+  { value: "meeting_room", label: "Meeting Room", icon: "🧑‍🤝‍🧑" },
 ]
 
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
@@ -24,9 +25,11 @@ const DURATIONS = [1, 2, 4];
 export default function BookingWizard({
   locations,
   remainingHours,
+  catalog,
 }: {
   locations: Location[]
   remainingHours: number
+  catalog: ResourceCatalogItem[]
 }) {
   const [locationId, setLocationId] = useState<number | null>(null)
   const [resourceType, setResourceType] = useState<ResourceType | null>(null)
@@ -35,6 +38,7 @@ export default function BookingWizard({
   const [startHour, setStartHour] = useState<number | null>(null)
   const [selectedResourceId, setSelectedResourceId] = useState<number | null>(null)
   const [conflictResourceId, setConflictResourceId] = useState<number | null>(null)
+  const [liveCatalog, setLiveCatalog] = useState(catalog)
 
   const [availability, setAvailability] = useState<{ resourceIds: number[]; bookings: { resource_id: number; start_time: string; end_time: string }[] } | null>(null)
   const [, startTransition] = useTransition()
@@ -51,6 +55,19 @@ export default function BookingWizard({
       setAvailability(result)
     })
   }, [locationId, resourceType, date])
+
+  useEffect(() => {
+    let active = true
+    const refreshCatalog = async () => {
+      const nextCatalog = await getResourceCatalog()
+      if (active) setLiveCatalog(nextCatalog)
+    }
+    const timer = window.setInterval(refreshCatalog, 5000)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+    }
+  }, [])
 
   // Reset the specific seat pick whenever the higher-level selection changes.
 
@@ -106,6 +123,9 @@ export default function BookingWizard({
   }
 
   const icon = RESOURCE_TYPES.find((rt) => rt.value === resourceType)?.icon ?? "🪑"
+  const selectedCatalog = liveCatalog.find((item) => item.resourceType === resourceType)
+  const minimumHours = selectedCatalog ? Math.ceil(selectedCatalog.minDurationMinutes / 60) : 1
+  const allowedDurations = DURATIONS.filter((d) => d >= minimumHours)
 
   if (bookingState && "success" in bookingState) {
     return (
@@ -114,10 +134,15 @@ export default function BookingWizard({
           ✓
         </div>
         <h2 className="mb-2 text-xl font-semibold text-foreground">Booking confirmed</h2>
+        <div className="mb-6 space-y-1 text-sm text-muted">
+          <p>Booking ID: <span className="font-medium text-foreground">#{bookingState.bookingId}</span></p>
+          <p className="capitalize">{bookingState.resourceType.replace("_", " ")}</p>
+          <p>{new Date(bookingState.startTime).toLocaleString()} – {new Date(bookingState.endTime).toLocaleTimeString()}</p>
+        </div>
         <p className="mb-6 text-sm text-muted">
           {bookingState.amount === 0
             ? "This booking used your free monthly hours."
-            : `₹${bookingState.amount} will be added to your next invoice.`}
+            : `₹${bookingState.amount.toFixed(2)} will be added to your next invoice.`}
         </p>
         <a href="/portal" className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
           Back to dashboard
@@ -175,7 +200,9 @@ export default function BookingWizard({
       <div>
         <h2 className="mb-4 text-sm font-semibold text-foreground">2. Select Resource Type</h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {RESOURCE_TYPES.map((rt) => (
+          {RESOURCE_TYPES.map((rt) => {
+            const pricing = liveCatalog.find((item) => item.resourceType === rt.value)
+            return (
             <button
               type="button"
               key={rt.value}
@@ -190,9 +217,12 @@ export default function BookingWizard({
               }`}
             >
               <p className="font-medium text-foreground">{rt.icon} {rt.label}</p>
-              <p className="text-xs text-muted">From ₹{rt.hourly}/hr</p>
+              <p className="text-xs text-muted">
+                From ₹{pricing?.hourlyPrice.toFixed(2) ?? "0.00"}/hr
+              </p>
             </button>
-          ))}
+            )
+            })}
         </div>
         {resourceType === "meeting_room" && remainingHours > 0 && (
           <p className="mt-2 text-xs text-[var(--status-confirmed-fg)]">
@@ -228,7 +258,7 @@ export default function BookingWizard({
               }}
               className="rounded-lg border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary"
             >
-              {DURATIONS.map((d) => (
+              {allowedDurations.map((d) => (
                 <option key={d} value={d}>{d} hour{d > 1 ? "s" : ""}</option>
               ))}
             </select>

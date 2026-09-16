@@ -23,6 +23,16 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
   const [, startTransition] = useTransition()
 
   useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!locationId) return
+      startTransition(async () => {
+        setAvailability(await getAvailability(locationId, resourceType, date))
+      })
+    }, 10000)
+    return () => window.clearInterval(timer)
+  }, [locationId, resourceType, date])
+
+  useEffect(() => {
     startTransition(async () => {
       if (!locationId) {
         setAvailability(null)
@@ -48,6 +58,16 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-end gap-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (!locationId) return
+            startTransition(async () => setAvailability(await getAvailability(locationId, resourceType, date)))
+          }}
+          className="rounded-lg border border-border bg-white px-3 py-2 text-sm hover:border-primary"
+        >
+          Refresh grid
+        </button>
         <div>
           <label className="mb-1 block text-xs text-muted">Location</label>
           <select

@@ -29,6 +29,36 @@ function revalidateResourceDependents() {
 }
 
 export type ResourceFormState = { error: string } | { success: true } | null
+export type ResourceCatalogItem = {
+  resourceType: string
+  hourlyPrice: number
+  minDurationMinutes: number
+}
+
+export async function getResourceCatalog(): Promise<ResourceCatalogItem[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("resources")
+    .select("resource_type, min_booking_duration_minutes, resource_pricing(hourly_price)")
+    .eq("active", true)
+
+  if (error) throw new Error(error.message)
+
+  return Object.values(
+    (data ?? []).reduce<Record<string, ResourceCatalogItem>>((result, resource) => {
+      const price = (resource.resource_pricing as unknown as { hourly_price: number }[] | null)?.[0]?.hourly_price ?? 0
+      const current = result[resource.resource_type]
+      result[resource.resource_type] = {
+        resourceType: resource.resource_type,
+        hourlyPrice: current ? Math.min(current.hourlyPrice, price) : price,
+        minDurationMinutes: current
+          ? Math.min(current.minDurationMinutes, resource.min_booking_duration_minutes)
+          : resource.min_booking_duration_minutes,
+      }
+      return result
+    }, {})
+  )
+}
 
 // FR3: add a resource for the admin's own location.
 export async function addResource(

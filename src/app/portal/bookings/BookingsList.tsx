@@ -1,7 +1,7 @@
 "use client"
 
-import { useActionState } from "react"
-import { cancelBooking } from "@/app/actions/cancellation"
+import { useActionState, useState } from "react"
+import { cancelBooking, getCancellationPreview, type CancellationPreview } from "@/app/actions/cancellation"
 
 type Booking = {
   booking_id: number
@@ -15,6 +15,15 @@ type Booking = {
 
 function CancelButton({ bookingId }: { bookingId: number }) {
   const [state, formAction, pending] = useActionState(cancelBooking, null)
+  const [preview, setPreview] = useState<CancellationPreview | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+
+  async function reviewCancellation() {
+    setLoadingPreview(true)
+    const result = await getCancellationPreview(bookingId)
+    setPreview(result)
+    setLoadingPreview(false)
+  }
 
   if (state && "success" in state) {
     return (
@@ -24,18 +33,44 @@ function CancelButton({ bookingId }: { bookingId: number }) {
     )
   }
 
+  if (!preview) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={reviewCancellation}
+          disabled={loadingPreview}
+          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+        >
+          {loadingPreview ? "Checking…" : "Cancel"}
+        </button>
+        {state?.error && <p className="mt-1 text-xs text-red-600">{state.error}</p>}
+      </div>
+    )
+  }
+
+  if ("error" in preview) {
+    return <p className="text-xs text-red-600">{preview.error}</p>
+  }
+
   return (
-    <form action={formAction}>
-      <input type="hidden" name="booking_id" value={bookingId} />
-      <button
-        type="submit"
-        disabled={pending}
-        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
-      >
-        {pending ? "Cancelling…" : "Cancel"}
-      </button>
+    <div className="max-w-xs text-right">
+      <p className="mb-2 text-xs text-muted">
+        {preview.refundPct}% refund · ₹{preview.refundAmount.toFixed(2)}
+        {preview.noticeWindowHours > 0 && ` · ${preview.noticeWindowHours}h notice window`}
+      </p>
+      <form action={formAction} className="flex justify-end gap-2">
+        <input type="hidden" name="booking_id" value={bookingId} />
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white disabled:opacity-50"
+        >
+          {pending ? "Cancelling…" : "Confirm cancellation"}
+        </button>
+      </form>
       {state?.error && <p className="mt-1 text-xs text-red-600">{state.error}</p>}
-    </form>
+    </div>
   )
 }
 
@@ -64,7 +99,7 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
           <div>
             <p className="font-medium capitalize text-foreground">{b.resource_type.replace("_", " ")}</p>
             <p className="text-sm text-muted">
-              {new Date(b.start_time).toLocaleString()} · {b.location_name} · ₹{b.amount ?? 0}
+              {new Date(b.start_time).toLocaleString()} · {b.location_name} · ₹{(b.amount ?? 0).toFixed(2)}
             </p>
           </div>
           <div className="flex items-center gap-4">

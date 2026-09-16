@@ -1,19 +1,20 @@
 "use client"
 
-import { useActionState, useRef } from "react"
+import { useActionState, useEffect, useRef } from "react"
 import { submitHelpQuery } from "@/app/actions/help"
 
 export default function HelpForm() {
   const [state, formAction, pending] = useActionState(submitHelpQuery, null)
   const formRef = useRef<HTMLFormElement>(null)
 
+  useEffect(() => {
+    if (state && "success" in state) formRef.current?.reset()
+  }, [state])
+
   return (
     <form
       ref={formRef}
-      action={async (formData) => {
-        await formAction(formData)
-        formRef.current?.reset()
-      }}
+      action={formAction}
       className="max-w-lg space-y-3"
     >
       <textarea

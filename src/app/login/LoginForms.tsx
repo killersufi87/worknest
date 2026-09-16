@@ -63,11 +63,12 @@ export default function LoginForms() {
       ) : (
         <form action={employeeAction} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Employee ID</label>
             <input
-              name="email"
-              type="email"
+              name="employee_id"
+              type="text"
               required
+              placeholder="Employee ID"
               className="w-full rounded-lg border border-border bg-white px-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
           </div>

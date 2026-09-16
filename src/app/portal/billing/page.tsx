@@ -47,11 +47,11 @@ export default async function BillingPage() {
 
         <div className="mb-10 grid grid-cols-2 gap-8 border-y border-border py-6">
           <div>
-            <p className="text-3xl font-bold text-foreground">₹{totalCharged}</p>
+            <p className="text-3xl font-bold text-foreground">₹{totalCharged.toFixed(2)}</p>
             <p className="text-sm text-muted">Total charged</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-foreground">₹{totalRefunded}</p>
+            <p className="text-3xl font-bold text-foreground">₹{totalRefunded.toFixed(2)}</p>
             <p className="text-sm text-muted">Total refunded</p>
           </div>
         </div>
@@ -79,10 +79,10 @@ export default async function BillingPage() {
                       </td>
                       <td className="px-5 py-3 capitalize text-muted">{b.status}</td>
                       <td className="px-5 py-3 text-right text-foreground">
-                        ₹{b.amount ?? 0}
+                        ₹{(b.amount ?? 0).toFixed(2)}
                         {refund && (
                           <span className="ml-2 text-xs text-[var(--status-confirmed-fg)]">
-                            (₹{refund.refund_amount} refunded)
+                            (₹{Number(refund.refund_amount ?? 0).toFixed(2)} refunded)
                           </span>
                         )}
                       </td>

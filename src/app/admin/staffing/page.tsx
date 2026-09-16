@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import AdminSidebar from "../AdminSidebar"
 import PortalBackdrop from "../../portal/PortalBackdrop"
 import ShiftFinder from "./ShiftFinder"
+import ShiftForm from "./ShiftForm"
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
@@ -57,7 +58,9 @@ export default async function StaffingPage() {
           })}
         </div>
 
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Who&rsquo;s Working — pick a location and date</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Create a shift</h2>
+        <ShiftForm locations={locations ?? []} staff={staffList ?? []} />
+        <h2 className="mb-4 mt-10 text-lg font-semibold text-foreground">Who&rsquo;s Working — pick a location and date</h2>
         <ShiftFinder locations={locations ?? []} />
       </main>
     </div>

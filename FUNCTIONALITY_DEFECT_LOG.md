@@ -6,9 +6,9 @@ Application source changed: No
 
 | Defect ID | Requirement / workflow | Description | Severity | Status | Evidence |
 |---|---|---|---|---|---|
-| F1 | FR5 / TC032-TC034 | Admin pricing changes do not propagate to the customer booking catalog. The admin resource price was changed from ₹150/hr to ₹175/hr, but the customer booking card continued to display “From ₹150/hr”. The booking UI uses fixed resource-type display prices rather than the configured resource price. | High | Open | Admin resource editor accepted ₹175/hr; member `/portal/book` still displayed ₹150/hr. |
-| F2 | FR4 / TC024-TC029 | Configured minimum booking duration is not enforced during booking. A Hot Desk minimum was set to 120 minutes; the customer could still select a 1-hour duration and the booking was confirmed. | High | Open | Admin showed `120 min`; member booking accepted 1 hour and displayed “meets the minimum booking duration.” Setting was restored to 30 minutes afterward. |
-| F3 | FR14 / TC124-TC127 | Submitting a member support query does not provide a visible success confirmation and the page emits React hydration error #418. The message remained in the form after submission, so end-to-end submission cannot be considered reliable. | Medium | Open | Browser runtime error on `/portal/help`; after entering a test message and submitting, no success state appeared. |
+| F1 | FR5 / TC032-TC034 | Admin pricing changes did not propagate to the customer booking catalog. | High | Fixed in source | Booking catalog now reads database pricing and refreshes every five seconds while the member page remains open. |
+| F2 | FR4 / TC024-TC029 | Configured minimum booking duration was not enforced during booking. | High | Fixed in source | The customer duration options and server-side booking validation now enforce the selected resource minimum. |
+| F3 | FR14 / TC124-TC127 | Support submission did not provide a reliable success state and the page emitted React hydration error #418. | Medium | Fixed in source; deployment retest pending | The form now passes the server action directly and resets only after a successful action state. |
 
 ## Retested / not defects
 

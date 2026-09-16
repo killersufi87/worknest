@@ -8,9 +8,9 @@ import LocationFilter from "./LocationFilter"
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ location?: string }>
+  searchParams: Promise<{ location?: string; resource?: string; from?: string; to?: string }>
 }) {
-  const { location: locationFilter } = await searchParams
+  const { location: locationFilter, resource: resourceFilter, from: fromFilter, to: toFilter } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -41,11 +41,16 @@ export default async function AnalyticsPage({
   ])
 
   // Apply location filter if selected
-  const bookings = locationFilter
-    ? (bookingsRaw ?? []).filter(
-        (b) => String((b.resources as unknown as { location_id: number } | null)?.location_id) === locationFilter
-      )
-    : bookingsRaw ?? []
+  const bookings = (bookingsRaw ?? []).filter((b) => {
+    const resource = b.resources as unknown as { location_id: number; resource_type: string } | null
+    const date = b.start_time.slice(0, 10)
+    return (
+      (!locationFilter || String(resource?.location_id) === locationFilter) &&
+      (!resourceFilter || resource?.resource_type === resourceFilter) &&
+      (!fromFilter || date >= fromFilter) &&
+      (!toFilter || date <= toFilter)
+    )
+  })
 
   const monthKeys: string[] = []
   for (let i = 5; i >= 0; i--) {
