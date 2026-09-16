@@ -13,6 +13,11 @@ type Booking = {
   location_name: string
 }
 
+function formatBookingTime(value: string) {
+  const date = new Date(value)
+  return `${date.toISOString().slice(0, 16).replace("T", " ")} UTC`
+}
+
 function CancelButton({ bookingId }: { bookingId: number }) {
   const [state, formAction, pending] = useActionState(cancelBooking, null)
   const [preview, setPreview] = useState<CancellationPreview | null>(null)
@@ -99,7 +104,7 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
           <div>
             <p className="font-medium capitalize text-foreground">{b.resource_type.replace("_", " ")}</p>
             <p className="text-sm text-muted">
-              {new Date(b.start_time).toLocaleString()} · {b.location_name} · ₹{(b.amount ?? 0).toFixed(2)}
+              {formatBookingTime(b.start_time)} · {b.location_name} · ₹{(b.amount ?? 0).toFixed(2)}
             </p>
           </div>
           <div className="flex items-center gap-4">
