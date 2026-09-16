@@ -337,7 +337,9 @@ export default function BookingWizard({
           </div>
           <div className="flex flex-wrap gap-3">
             {availability.resourceIds.map((rid) => {
-              const isAvailable = seatStatus.get(rid) ?? false
+              const resource = availability.resources.find((item) => item.resourceId === rid)
+              const meetsMinimum = !resource || effectiveDuration * 60 >= resource.minDurationMinutes
+              const isAvailable = (seatStatus.get(rid) ?? false) && meetsMinimum
               const isSelected = selectedResourceId === rid
               const isConflict = conflictResourceId === rid
               return (
@@ -346,7 +348,11 @@ export default function BookingWizard({
                   key={rid}
                   disabled={!isAvailable && !isConflict}
                   onClick={() => handleSelectSeat(rid)}
-                  title={`Resource ${rid}`}
+                  title={
+                    meetsMinimum
+                      ? `Resource #${rid}`
+                      : `Resource #${rid} requires at least ${Math.ceil((resource?.minDurationMinutes ?? 0) / 60)} hours`
+                  }
                   className={`flex h-16 w-16 flex-col items-center justify-center rounded-xl border-2 text-2xl transition-colors ${
                     isConflict
                       ? "border-[var(--status-partial-fg)] bg-[var(--status-partial-bg)]"
@@ -363,6 +369,11 @@ export default function BookingWizard({
               )
             })}
           </div>
+          {availability.resources.some((resource) => effectiveDuration * 60 < resource.minDurationMinutes) && (
+            <p className="mt-3 text-sm text-muted">
+              Some resources are unavailable because they require a longer minimum booking duration.
+            </p>
+          )}
           {conflictResourceId && (
             <p className="mt-3 text-sm text-[var(--status-partial-fg)]">
               ⚠ Someone else is booking that seat right now. Please select another.
