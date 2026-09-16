@@ -15,7 +15,12 @@ type Booking = {
 
 function formatBookingTime(value: string) {
   const date = new Date(value)
-  return `${date.toISOString().slice(0, 16).replace("T", " ")} UTC`
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short",
+    hour12: true,
+  }).format(date)
 }
 
 function CancelButton({ bookingId }: { bookingId: number }) {
@@ -104,7 +109,10 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
           <div>
             <p className="font-medium capitalize text-foreground">{b.resource_type.replace("_", " ")}</p>
             <p className="text-sm text-muted">
-              {formatBookingTime(b.start_time)} · {b.location_name} · ₹{(b.amount ?? 0).toFixed(2)}
+              Booking #{b.booking_id} · {formatBookingTime(b.start_time)} – {formatBookingTime(b.end_time)} IST
+            </p>
+            <p className="text-sm text-muted">
+              {b.location_name} · ₹{(b.amount ?? 0).toFixed(2)}
             </p>
           </div>
           <div className="flex items-center gap-4">

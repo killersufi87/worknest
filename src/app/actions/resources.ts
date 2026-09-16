@@ -33,13 +33,15 @@ export type ResourceCatalogItem = {
   resourceType: string
   hourlyPrice: number
   minDurationMinutes: number
+  capacityTiers: string[]
+  resourceCount: number
 }
 
 export async function getResourceCatalog(): Promise<ResourceCatalogItem[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("resources")
-    .select("resource_type, min_booking_duration_minutes, resource_pricing(hourly_price)")
+    .select("resource_type, capacity_tier, min_booking_duration_minutes, resource_pricing(hourly_price)")
     .eq("active", true)
 
   if (error) throw new Error(error.message)
@@ -54,6 +56,11 @@ export async function getResourceCatalog(): Promise<ResourceCatalogItem[]> {
         minDurationMinutes: current
           ? Math.min(current.minDurationMinutes, resource.min_booking_duration_minutes)
           : resource.min_booking_duration_minutes,
+        capacityTiers: Array.from(new Set([
+          ...(current?.capacityTiers ?? []),
+          ...(resource.capacity_tier ? [resource.capacity_tier] : []),
+        ])),
+        resourceCount: (current?.resourceCount ?? 0) + 1,
       }
       return result
     }, {})

@@ -22,6 +22,15 @@ const RESOURCE_TYPES: { value: ResourceType; label: string; icon: string }[] = [
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
 const DURATIONS = [1, 2, 4];
 
+function formatBookingTime(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short",
+    hour12: true,
+  }).format(new Date(value))
+}
+
 export default function BookingWizard({
   locations,
   remainingHours,
@@ -127,6 +136,15 @@ export default function BookingWizard({
   const minimumHours = selectedCatalog ? Math.ceil(selectedCatalog.minDurationMinutes / 60) : 1
   const allowedDurations = DURATIONS.filter((d) => d >= minimumHours)
 
+  useEffect(() => {
+    if (duration < minimumHours) {
+      setDuration(allowedDurations[0] ?? minimumHours)
+      setStartHour(null)
+      setSelectedResourceId(null)
+      setConflictResourceId(null)
+    }
+  }, [duration, minimumHours, allowedDurations])
+
   if (bookingState && "success" in bookingState) {
     return (
       <div className="max-w-lg rounded-xl border border-border bg-white p-8 text-center">
@@ -137,7 +155,7 @@ export default function BookingWizard({
         <div className="mb-6 space-y-1 text-sm text-muted">
           <p>Booking ID: <span className="font-medium text-foreground">#{bookingState.bookingId}</span></p>
           <p className="capitalize">{bookingState.resourceType.replace("_", " ")}</p>
-          <p>{new Date(bookingState.startTime).toLocaleString()} – {new Date(bookingState.endTime).toLocaleTimeString()}</p>
+          <p>{formatBookingTime(bookingState.startTime)} – {formatBookingTime(bookingState.endTime)} IST</p>
         </div>
         <p className="mb-6 text-sm text-muted">
           {bookingState.amount === 0
@@ -224,6 +242,19 @@ export default function BookingWizard({
             )
             })}
         </div>
+        {selectedCatalog && (
+          <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-foreground">
+            <p className="font-semibold">{icon} {selectedCatalog.resourceType.replace("_", " ")}</p>
+            <div className="mt-2 grid gap-2 text-muted sm:grid-cols-3">
+              <span>From ₹{selectedCatalog.hourlyPrice.toFixed(2)}/hr</span>
+              <span>Minimum {selectedCatalog.minDurationMinutes} minutes</span>
+              <span>{selectedCatalog.resourceCount} resources</span>
+            </div>
+            {selectedCatalog.capacityTiers.length > 0 && (
+              <p className="mt-2 text-muted">Capacity: {selectedCatalog.capacityTiers.join(", ")}</p>
+            )}
+          </div>
+        )}
         {resourceType === "meeting_room" && remainingHours > 0 && (
           <p className="mt-2 text-xs text-[var(--status-confirmed-fg)]">
             You have {remainingHours} free hours remaining this month.

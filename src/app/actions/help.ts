@@ -36,8 +36,34 @@ export async function submitHelpQuery(
   return { success: true }
 }
 
-export async function resolveHelpQuery(queryId: number) {
+export type ResolveHelpState = { error: string } | { success: true } | null
+
+export async function resolveHelpQuery(
+  _prev: ResolveHelpState,
+  formData: FormData
+): Promise<ResolveHelpState> {
+  const queryId = Number(formData.get("query_id"))
+  if (!queryId) return { error: "Invalid query." }
+
   const supabase = await createClient()
-  await supabase.from("help_queries").update({ status: "resolved" }).eq("query_id", queryId)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "You're not logged in." }
+
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("employee_id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle()
+  if (!employee) return { error: "Admin access required." }
+
+  const { error } = await supabase
+    .from("help_queries")
+    .update({ status: "resolved" })
+    .eq("query_id", queryId)
+  if (error) return { error: error.message }
+
   revalidatePath("/admin/help")
+  return { success: true }
 }
