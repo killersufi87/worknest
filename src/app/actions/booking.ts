@@ -69,7 +69,7 @@ export async function getUpcomingBookings() {
     .eq("status", "confirmed")
     .gte("start_time", now)
     .order("start_time", { ascending: true })
-    .limit(5)
+    .limit(6)
 
   if (error) throw new Error(error.message)
   return (data ?? []).map((booking) => {
