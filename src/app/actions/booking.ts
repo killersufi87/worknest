@@ -60,6 +60,32 @@ export async function getAvailability(
   }
 }
 
+export async function getUpcomingBookings() {
+  const supabase = await createClient()
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from("bookings")
+    .select("booking_id, member_id, resource_id, start_time, end_time, resources(resource_type, locations(name))")
+    .eq("status", "confirmed")
+    .gte("start_time", now)
+    .order("start_time", { ascending: true })
+    .limit(5)
+
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((booking) => {
+    const resource = booking.resources as unknown as { resource_type: string; locations: { name: string } | null } | null
+    return {
+      bookingId: booking.booking_id,
+      memberId: booking.member_id,
+      resourceId: booking.resource_id,
+      resourceType: resource?.resource_type ?? "resource",
+      locationName: resource?.locations?.name ?? "—",
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+    }
+  })
+}
+
 // Live per-resource check, used right before letting a customer lock in a
 // specific seat, so a race between two customers picking the same
 // resource at the same instant is caught before submission.

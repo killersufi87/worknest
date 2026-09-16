@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useTransition } from "react"
-import { getAvailability, type ResourceType } from "@/app/actions/booking"
+import { getAvailability, getUpcomingBookings, type ResourceType } from "@/app/actions/booking"
 
 type Location = { location_id: number; name: string }
 
@@ -20,13 +20,16 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [hour, setHour] = useState(9)
   const [availability, setAvailability] = useState<{ resourceIds: number[]; bookings: { resource_id: number; start_time: string; end_time: string }[] } | null>(null)
+  const [upcomingBookings, setUpcomingBookings] = useState<Awaited<ReturnType<typeof getUpcomingBookings>>>([])
   const [, startTransition] = useTransition()
 
   useEffect(() => {
+    startTransition(async () => setUpcomingBookings(await getUpcomingBookings()))
     const timer = window.setInterval(() => {
       if (!locationId) return
       startTransition(async () => {
         setAvailability(await getAvailability(locationId, resourceType, date))
+        setUpcomingBookings(await getUpcomingBookings())
       })
     }, 10000)
     return () => window.clearInterval(timer)
@@ -62,7 +65,10 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
           type="button"
           onClick={() => {
             if (!locationId) return
-            startTransition(async () => setAvailability(await getAvailability(locationId, resourceType, date)))
+            startTransition(async () => {
+              setAvailability(await getAvailability(locationId, resourceType, date))
+              setUpcomingBookings(await getUpcomingBookings())
+            })
           }}
           className="rounded-lg border border-border bg-white px-3 py-2 text-sm hover:border-primary"
         >
@@ -125,12 +131,12 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
             <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-[var(--status-booked-bg)] border border-[var(--status-booked-fg)]" /> Booked</span>
           </div>
           <div className="flex flex-wrap gap-3">
-            {availability.resourceIds.map((rid, idx) => {
+            {availability.resourceIds.map((rid) => {
               const booked = isBooked(rid)
               return (
                 <div
                   key={rid}
-                  title={`Seat ${idx + 1}${booked ? " — booked" : " — available"}`}
+                  title={`Resource #${rid}${booked ? " — booked" : " — available"}`}
                   className={`flex h-16 w-16 flex-col items-center justify-center rounded-xl border-2 text-2xl ${
                     booked
                       ? "border-[var(--status-booked-fg)]/40 bg-[var(--status-booked-bg)]"
@@ -138,7 +144,7 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
                   }`}
                 >
                   {icon}
-                  <span className="text-[10px] text-muted">{idx + 1}</span>
+                  <span className="text-[10px] text-muted">#{rid}</span>
                 </div>
               )
             })}
@@ -148,6 +154,44 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
           </div>
         </>
       )}
+      <div className="mt-8 rounded-2xl border border-[#B8CDB5]/60 bg-[#E4EFE7]/75 p-5">
+        <div className="mb-4 flex items-end justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-primary">Upcoming bookings</h3>
+            <p className="text-xs text-muted">Live view · refreshes every 10 seconds</p>
+          </div>
+          <span className="rounded-full bg-white/70 px-3 py-1 text-xs text-primary">{upcomingBookings.length} shown</span>
+        </div>
+        {upcomingBookings.length > 0 ? (
+          <div className="grid gap-3 lg:grid-cols-2">
+            {upcomingBookings.map((booking) => (
+              <div key={booking.bookingId} className="rounded-xl border border-white/80 bg-white/70 p-4 text-sm shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-foreground">Booking #{booking.bookingId}</span>
+                  <span className="rounded-full bg-[#DCE8DC] px-2 py-1 text-[11px] font-medium text-primary">Confirmed</span>
+                </div>
+                <div className="mt-2 grid gap-1 text-xs text-muted sm:grid-cols-2">
+                  <span>Member ID: <strong className="text-foreground">#{booking.memberId}</strong></span>
+                  <span>Resource: <strong className="text-foreground">#{booking.resourceId}</strong></span>
+                  <span className="capitalize">{booking.resourceType.replace("_", " ")}</span>
+                  <span>{booking.locationName}</span>
+                  <span className="sm:col-span-2">{formatIST(booking.startTime)} – {formatIST(booking.endTime)} IST</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl bg-white/60 p-4 text-sm text-muted">No upcoming confirmed bookings.</p>
+        )}
+      </div>
     </div>
   )
+}
+
+function formatIST(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
 }
