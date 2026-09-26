@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { updateMemberLocation } from "@/app/actions/auth"
+import { useLocationTheme } from "./LocationThemeProvider"
 
 type Location = { location_id: number; name: string }
 type Activity = { id: string; text: string; time: string }
@@ -33,6 +34,8 @@ export default function TopBar({
   const [bellOpen, setBellOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [pending, setPending] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const { locationName: themedLocationName, setLocationTheme } = useLocationTheme()
 
   const locationRef = useClickOutside(() => setLocationOpen(false))
   const bellRef = useClickOutside(() => setBellOpen(false))
@@ -40,9 +43,19 @@ export default function TopBar({
 
   async function handleLocationChange(id: number) {
     setPending(true)
-    await updateMemberLocation(id)
-    setPending(false)
-    setLocationOpen(false)
+    setLocationError(null)
+    try {
+      const result = await updateMemberLocation(id)
+      if ("error" in result) {
+        setLocationError(result.error ?? "Could not update your location.")
+        return
+      }
+      const selectedLocation = locations.find((location) => location.location_id === id)
+      if (selectedLocation) setLocationTheme(selectedLocation.name)
+      setLocationOpen(false)
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
@@ -60,7 +73,7 @@ export default function TopBar({
             onClick={() => setLocationOpen((v) => !v)}
             className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-foreground hover:bg-black/5"
           >
-            📍 {locationName} {pending ? "…" : "▾"}
+            📍 {themedLocationName ?? locationName} {pending ? "…" : "▾"}
           </button>
           {locationOpen && (
             <div className="absolute right-0 z-20 mt-2 w-48 rounded-lg border border-border bg-white py-1 shadow-lg">
@@ -73,6 +86,7 @@ export default function TopBar({
                   {loc.name}
                 </button>
               ))}
+              {locationError && <p role="alert" className="px-4 py-2 text-xs text-red-700">{locationError}</p>}
             </div>
           )}
         </div>

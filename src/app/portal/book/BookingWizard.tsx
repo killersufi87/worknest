@@ -1,16 +1,19 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useEffect, useActionState, useTransition } from "react"
 import { getAvailability, checkResourceStillFree, createBooking, type ResourceType } from "@/app/actions/booking"
 import { getResourceCatalog, type ResourceCatalogItem } from "@/app/actions/resources"
+import { useLocationTheme } from "../LocationThemeProvider"
 import ResourceGallery from "./ResourceGallery"
 
 type Location = { location_id: number; name: string; address: string | null }
 
-const LOCATION_IMAGES: Record<string, string> = {
-  Koramangala: "photo-1700163080760-12c275d3fe36",
-  Indiranagar: "photo-1498049860654-af1a5c566876",
-  HSR: "photo-1758518730083-4c12527b6742",
+const LOCATION_CARD_IMAGES: Record<string, string> = {
+  koramangala: "/resource-gallery/koramangala_cabin_1.webp",
+  indiranagar: "/resource-gallery/indiranagar_dedicated_desk_2.webp",
+  indiranagr: "/resource-gallery/indiranagar_dedicated_desk_2.webp",
+  hsr: "/resource-gallery/hsr_meeting_room_3.webp",
 }
 
 const RESOURCE_TYPES: { value: ResourceType; label: string; icon: string }[] = [
@@ -49,6 +52,7 @@ export default function BookingWizard({
   const [selectedResourceId, setSelectedResourceId] = useState<number | null>(null)
   const [conflictResourceId, setConflictResourceId] = useState<number | null>(null)
   const [liveCatalog, setLiveCatalog] = useState(catalog)
+  const { setLocationTheme } = useLocationTheme()
 
   const [availability, setAvailability] = useState<{
     resources: {
@@ -194,19 +198,22 @@ export default function BookingWizard({
               key={loc.location_id}
               onClick={() => {
                 setLocationId(loc.location_id)
+                setLocationTheme(loc.name)
                 setStartHour(null)
                 setSelectedResourceId(null)
                 setConflictResourceId(null)
               }}
-              className={`min-w-0 overflow-hidden rounded-xl border-2 bg-white text-left transition-colors ${
-                locationId === loc.location_id ? "border-primary" : "border-border"
+              className={`min-w-0 overflow-hidden rounded-xl border-2 bg-white text-left transition-all duration-300 ${
+                locationId === loc.location_id ? "border-[var(--location-gold)] shadow-[0_0_0_3px_var(--location-gold-soft)]" : "border-border"
               }`}
             >
-              <div className="h-28 w-full overflow-hidden">
-                <img
-                  src={`https://images.unsplash.com/${LOCATION_IMAGES[loc.name] ?? LOCATION_IMAGES.Koramangala}?w=500&q=80&auto=format&fit=crop`}
-                  alt={loc.name}
-                  className="h-full w-full object-cover"
+              <div className="relative h-28 w-full overflow-hidden">
+                <Image
+                  src={LOCATION_CARD_IMAGES[loc.name.toLowerCase().replace(/\s+/g, "")] ?? LOCATION_CARD_IMAGES.koramangala}
+                  alt={`${loc.name} workspace`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
                 />
               </div>
               <div className="p-3">
