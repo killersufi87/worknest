@@ -12,21 +12,6 @@ const LocationThemeContext = createContext<LocationThemeContextValue | null>(nul
 
 const LOCATION_THEMES: Record<string, CSSProperties> = {
   koramangala: {
-    "--background": "#F1E6E7",
-    "--foreground": "#2D2024",
-    "--card": "#FFFDFC",
-    "--sidebar": "#522A3B",
-    "--sidebar-hover": "#69394D",
-    "--muted": "#78656C",
-    "--primary": "#71364B",
-    "--primary-foreground": "#FFFFFF",
-    "--border": "#DDC9CC",
-    "--status-confirmed-bg": "#F1E5E2",
-    "--status-confirmed-fg": "#71364B",
-    "--location-gold": "#C4974B",
-    "--location-gold-soft": "#F5EBD9",
-  } as CSSProperties,
-  indiranagar: {
     "--background": "#E7EFE7",
     "--foreground": "#1E2D25",
     "--card": "#FCFEFB",
@@ -40,6 +25,21 @@ const LOCATION_THEMES: Record<string, CSSProperties> = {
     "--status-confirmed-fg": "#38644F",
     "--location-gold": "#B98A35",
     "--location-gold-soft": "#F4ECD8",
+  } as CSSProperties,
+  indiranagar: {
+    "--background": "#F1E6E7",
+    "--foreground": "#2D2024",
+    "--card": "#FFFDFC",
+    "--sidebar": "#522A3B",
+    "--sidebar-hover": "#69394D",
+    "--muted": "#78656C",
+    "--primary": "#71364B",
+    "--primary-foreground": "#FFFFFF",
+    "--border": "#DDC9CC",
+    "--status-confirmed-bg": "#F1E5E2",
+    "--status-confirmed-fg": "#71364B",
+    "--location-gold": "#C4974B",
+    "--location-gold-soft": "#F5EBD9",
   } as CSSProperties,
   hsr: {
     "--background": "#E5EDF2",
