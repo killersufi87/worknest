@@ -13,7 +13,7 @@ export default async function AdminPage() {
 
   const { data: employee } = await supabase
     .from("employees")
-    .select("employee_id, name")
+    .select("employee_id, name, role")
     .eq("auth_user_id", user.id)
     .maybeSingle()
   if (!employee) redirect("/login")
@@ -39,7 +39,7 @@ export default async function AdminPage() {
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
-      <AdminSidebar active="grid" name={employee.name} />
+      <AdminSidebar active="grid" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
       <main className="relative z-10 flex-1 px-10 py-10">

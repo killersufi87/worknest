@@ -64,6 +64,19 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/login"
       return NextResponse.redirect(url)
     }
+    if (isAdminRoute) {
+      const { data: employee } = await supabase
+        .from("employees")
+        .select("is_active")
+        .eq("auth_user_id", user.id)
+        .maybeSingle()
+
+      if (!employee?.is_active) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/login"
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return supabaseResponse

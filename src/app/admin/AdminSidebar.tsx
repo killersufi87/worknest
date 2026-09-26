@@ -4,19 +4,20 @@ const NAV = [
   { key: "grid", label: "Live Booking Grid", href: "/admin" },
   { key: "resources", label: "Manage Resources", href: "/admin/resources" },
   { key: "staffing", label: "Shift & Certifications", href: "/admin/staffing" },
+  { key: "memberships", label: "Membership Plans", href: "/admin/memberships", adminOnly: true },
   { key: "analytics", label: "Analytics", href: "/admin/analytics" },
   { key: "invoices", label: "Invoices", href: "/admin/invoices" },
   { key: "help", label: "Help Queries", href: "/admin/help" },
 ]
 
-export default function AdminSidebar({ active, name }: { active: string; name: string }) {
+export default function AdminSidebar({ active, name, isAdmin = false }: { active: string; name: string; isAdmin?: boolean }) {
   const initial = name.charAt(0).toUpperCase()
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col bg-[#18181A] px-6 py-10 text-white md:flex">
       <div className="mb-10 text-lg font-bold">WorkNest Admin</div>
       <nav className="flex flex-1 flex-col gap-1">
-        {NAV.map((item) => (
+        {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => (
           <a
             key={item.key}
             href={item.href}

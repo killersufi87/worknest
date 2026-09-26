@@ -13,7 +13,7 @@ export default async function ResourcesPage() {
 
   const { data: employee } = await supabase
     .from("employees")
-    .select("employee_id, name, location_id, locations(name)")
+    .select("employee_id, name, role, location_id, locations(name)")
     .eq("auth_user_id", user.id)
     .maybeSingle()
   if (!employee) redirect("/login")
@@ -42,7 +42,7 @@ export default async function ResourcesPage() {
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
-      <AdminSidebar active="resources" name={employee.name} />
+      <AdminSidebar active="resources" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
 
       <main className="relative z-10 flex-1 px-10 py-10">

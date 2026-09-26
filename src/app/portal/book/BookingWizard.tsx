@@ -3,6 +3,7 @@
 import { useState, useEffect, useActionState, useTransition } from "react"
 import { getAvailability, checkResourceStillFree, createBooking, type ResourceType } from "@/app/actions/booking"
 import { getResourceCatalog, type ResourceCatalogItem } from "@/app/actions/resources"
+import ResourceGallery from "./ResourceGallery"
 
 type Location = { location_id: number; name: string; address: string | null }
 
@@ -262,6 +263,15 @@ export default function BookingWizard({
           <p className="mt-2 text-xs text-[var(--status-confirmed-fg)]">
             You have {remainingHours} free hours remaining this month.
           </p>
+        )}
+        {locationId && resourceType && (
+          <div className="mt-5">
+            <ResourceGallery
+              key={`${locationId}-${resourceType}`}
+              locationName={locations.find((location) => location.location_id === locationId)?.name ?? ""}
+              resourceType={resourceType}
+            />
+          </div>
         )}
       </div>
 

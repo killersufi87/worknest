@@ -12,7 +12,7 @@ export default async function InvoicesPage() {
 
   const { data: employee } = await supabase
     .from("employees")
-    .select("employee_id, name")
+    .select("employee_id, name, role")
     .eq("auth_user_id", user.id)
     .maybeSingle()
   if (!employee) redirect("/login")
@@ -34,7 +34,7 @@ export default async function InvoicesPage() {
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
-      <AdminSidebar active="invoices" name={employee.name} />
+      <AdminSidebar active="invoices" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
       <main className="relative z-10 flex-1 px-10 py-10">

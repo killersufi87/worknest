@@ -42,7 +42,9 @@ export async function signupMember(
     .from("membership_tiers")
     .select("free_conference_hours_allowance")
     .eq("tier_id", tierId)
+    .eq("is_active", true)
     .single()
+  if (!tier) return { error: "That membership plan is no longer available." }
 
   const renewalDate = new Date()
   renewalDate.setMonth(renewalDate.getMonth() + 1)
@@ -54,7 +56,7 @@ export async function signupMember(
       name,
       tier_id: tierId,
       location_id: locationId,
-      remaining_monthly_hours: tier?.free_conference_hours_allowance ?? 0,
+      remaining_monthly_hours: tier.free_conference_hours_allowance,
       plan_renewal_date: renewalDate.toISOString().slice(0, 10),
     })
     .select("member_id")
@@ -138,20 +140,17 @@ export async function loginEmployee(
     return { error: "Employee ID and password are required." }
   }
 
-  const supabase = await createClient()
-  let email = identifier
-  if (!identifier.includes("@")) {
-    const { data: employee } = await createAdminClient()
-      .from("employees")
-      .select("email")
-      .eq("employee_id", Number(identifier))
-      .maybeSingle()
-    email = employee?.email ?? ""
+  const admin = createAdminClient()
+  const normalizedIdentifier = identifier.includes("@") ? identifier.toLowerCase() : identifier
+  const { data: employee } = normalizedIdentifier.includes("@")
+    ? await admin.from("employees").select("email, is_active").eq("email", normalizedIdentifier).maybeSingle()
+    : await admin.from("employees").select("email, is_active").eq("employee_id", Number(normalizedIdentifier)).maybeSingle()
+  if (!employee || !employee.is_active || !employee.email) {
+    return { error: "Invalid employee ID or password." }
   }
 
-  const { error } = email
-    ? await supabase.auth.signInWithPassword({ email, password })
-    : { error: new Error("Employee not found") }
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signInWithPassword({ email: employee.email, password })
 
   if (error) {
     return { error: "Invalid email or password." }

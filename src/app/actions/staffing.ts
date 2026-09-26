@@ -12,7 +12,6 @@ export async function createStaffShift(
   const employeeId = Number(formData.get("employee_id"))
   const locationId = Number(formData.get("location_id"))
   const shiftDate = String(formData.get("shift_date") ?? "")
-  const certification = String(formData.get("certification") ?? "").trim()
   if (!employeeId || !locationId || !shiftDate) {
     return { error: "Employee, location and date are required." }
   }
@@ -34,7 +33,6 @@ export async function createStaffShift(
     employee_id: employeeId,
     location_id: locationId,
     shift_date: shiftDate,
-    certification: certification || null,
   })
   if (error) return { error: error.message }
 
@@ -44,15 +42,18 @@ export async function createStaffShift(
 
 export async function getShiftsForDate(locationId: number, date: string) {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("staff_shifts")
-    .select("shift_id, certification, employees(name, role)")
+    .select("shift_id, employees(name, role, certification_status)")
     .eq("location_id", locationId)
     .eq("shift_date", date)
 
+  if (error) throw new Error(error.message)
   return (data ?? []).map((s) => ({
     shift_id: s.shift_id,
-    certification: s.certification,
+    certification: (s.employees as unknown as { certification_status: string; name: string; role: string } | null)?.certification_status === "certified"
+      ? "Process Certified"
+      : null,
     name: (s.employees as unknown as { name: string; role: string } | null)?.name ?? "—",
     role: (s.employees as unknown as { name: string; role: string } | null)?.role ?? "—",
   }))

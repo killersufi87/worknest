@@ -32,7 +32,7 @@ export default async function AnalyticsPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: employee } = await supabase.from("employees").select("employee_id, name").eq("auth_user_id", user.id).maybeSingle()
+  const { data: employee } = await supabase.from("employees").select("employee_id, name, role").eq("auth_user_id", user.id).maybeSingle()
   if (!employee) redirect("/login")
 
   await completePastBookings()
@@ -114,7 +114,7 @@ export default async function AnalyticsPage({
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
-      <AdminSidebar active="analytics" name={employee.name} />
+      <AdminSidebar active="analytics" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
       <main className="relative z-10 flex-1 px-6 py-8 lg:px-10">
         <div className="mx-auto max-w-7xl">

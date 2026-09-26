@@ -48,8 +48,9 @@ project by Group 3.
 |---|---|---|
 | FR1–2 | Employee login, auto-assigned location | `/login` (Employee tab) |
 | FR3–5 | Manage resources, min. duration, pricing | `/admin/resources` |
-| FR6–7 | Tier refund % / notice window | Seeded in `membership_tiers`; admin-editable UI not yet built |
+| FR6–7 | Manage plan price, refund %, notice window, and free conference hours | `/admin/memberships` |
 | FR8–9 | Member login, plan-scoped resource types | `/login` (Member tab), `/portal/book` |
+| — | Location/resource photo carousel | `/portal/book` |
 | FR10 | Double-booking prevention | Database constraint, see Phase 1 migration |
 | FR11 | Booking history | `/portal/bookings` |
 | FR12 | Cancellation with refund policy | `/portal/bookings`, `actions/cancellation.ts` |
@@ -58,7 +59,7 @@ project by Group 3.
 | FR15 | Cross-floor live booking grid | `/admin` |
 | FR16 | Revenue & occupancy analytics | `/admin/analytics` |
 | FR17 | Free conference hours (Gold/Platinum) | Applied automatically in `actions/booking.ts` |
-| FR18 | Shift & certification tracker, coverage flag | `/admin/staffing` |
+| FR18 | Shift tracker, employee certification management, and coverage flag | `/admin/staffing` |
 
 ## Local Setup
 
@@ -72,10 +73,8 @@ Required environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — from Supabase project settings
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only, used for member signup (never exposed to the browser)
 
-## Known Gaps (Honest, Not Hidden)
+## Known Scope Exclusions
 
-- FR6/FR7: tier refund %/notice window are correctly seeded and enforced,
-  but not yet editable from an admin screen.
 - Acquisition-channel/conversion tracking, mentioned in the original MSA,
-  was never carried into the approved BRD/SDD schema, so it was
-  intentionally not built, to avoid scope drift beyond the approved docs.
+  was not carried into the approved BRD/SDD schema, so it was intentionally
+  not built to avoid scope drift beyond the approved documents.

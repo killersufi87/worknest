@@ -30,10 +30,6 @@ export default function ShiftForm({ locations, staff }: { locations: Location[];
           Date
           <input name="shift_date" type="date" required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm" />
         </label>
-        <label className="text-xs text-muted">
-          Certification
-          <input name="certification" placeholder="Process certified" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm" />
-        </label>
       </div>
       <button type="submit" disabled={pending} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">
         {pending ? "Saving…" : "Create shift"}
