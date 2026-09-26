@@ -12,27 +12,45 @@ const LocationThemeContext = createContext<LocationThemeContextValue | null>(nul
 
 const LOCATION_THEMES: Record<string, CSSProperties> = {
   koramangala: {
+    "--background": "#F1E6E7",
+    "--foreground": "#2D2024",
+    "--card": "#FFFDFC",
+    "--sidebar": "#522A3B",
+    "--sidebar-hover": "#69394D",
+    "--muted": "#78656C",
     "--primary": "#71364B",
     "--primary-foreground": "#FFFFFF",
-    "--border": "#E8DCD4",
+    "--border": "#DDC9CC",
     "--status-confirmed-bg": "#F1E5E2",
     "--status-confirmed-fg": "#71364B",
     "--location-gold": "#C4974B",
     "--location-gold-soft": "#F5EBD9",
   } as CSSProperties,
   indiranagar: {
+    "--background": "#E7EFE7",
+    "--foreground": "#1E2D25",
+    "--card": "#FCFEFB",
+    "--sidebar": "#244638",
+    "--sidebar-hover": "#315C4A",
+    "--muted": "#607166",
     "--primary": "#38644F",
     "--primary-foreground": "#FFFFFF",
-    "--border": "#DCE6D9",
+    "--border": "#C9D9CB",
     "--status-confirmed-bg": "#E4EEE5",
     "--status-confirmed-fg": "#38644F",
     "--location-gold": "#B98A35",
     "--location-gold-soft": "#F4ECD8",
   } as CSSProperties,
   hsr: {
+    "--background": "#E5EDF2",
+    "--foreground": "#1C2A33",
+    "--card": "#FBFDFE",
+    "--sidebar": "#23465D",
+    "--sidebar-hover": "#315C78",
+    "--muted": "#5F707B",
     "--primary": "#315C78",
     "--primary-foreground": "#FFFFFF",
-    "--border": "#D9E3E8",
+    "--border": "#C8D8E1",
     "--status-confirmed-bg": "#E3EDF2",
     "--status-confirmed-fg": "#315C78",
     "--location-gold": "#C49343",
@@ -78,7 +96,7 @@ export default function LocationThemeProvider({
     <LocationThemeContext.Provider value={value}>
       <div
         data-location-theme={locationName ? normalizeLocationName(locationName) : undefined}
-        className="min-h-screen bg-background transition-colors duration-500"
+        className="min-h-screen bg-background text-foreground transition-colors duration-500"
         style={theme}
       >
         {children}

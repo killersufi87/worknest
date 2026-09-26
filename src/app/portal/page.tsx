@@ -57,7 +57,7 @@ export default async function PortalPage() {
   const firstName = member.name.split(" ")[0]
 
   const tierStyles: Record<string, string> = {
-    Regular: "bg-primary text-primary-foreground",
+    Regular: "bg-[#2F4A3C] text-white",
     Silver: "bg-[#9CA3AF] text-[#1C1B19]",
     Gold: "bg-[#D4AF37] text-[#1C1B19]",
     Platinum: "bg-gradient-to-r from-[#2A2A2E] to-[#4A4A52] text-white",
