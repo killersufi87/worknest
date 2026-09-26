@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react"
 import { getAvailability, getUpcomingBookings, type ResourceType } from "@/app/actions/booking"
+import { useLocationTheme } from "../portal/LocationThemeProvider"
 
 type Location = { location_id: number; name: string }
 
@@ -15,7 +16,12 @@ const RESOURCE_TYPES: { value: ResourceType; label: string; icon: string }[] = [
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17]
 
 export default function GridViewer({ locations }: { locations: Location[] }) {
-  const [locationId, setLocationId] = useState<number | null>(locations[0]?.location_id ?? null)
+  const { locationName, setLocationTheme } = useLocationTheme()
+  const [locationId, setLocationId] = useState<number | null>(
+    locations.find((location) => location.name.toLowerCase() === locationName?.toLowerCase())?.location_id
+      ?? locations[0]?.location_id
+      ?? null
+  )
   const [resourceType, setResourceType] = useState<ResourceType>("hot_desk")
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [hour, setHour] = useState(9)
@@ -78,7 +84,12 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
           <label className="mb-1 block text-xs text-muted">Location</label>
           <select
             value={locationId ?? ""}
-            onChange={(e) => setLocationId(Number(e.target.value))}
+            onChange={(e) => {
+              const nextLocationId = Number(e.target.value)
+              setLocationId(nextLocationId)
+              const selectedLocation = locations.find((location) => location.location_id === nextLocationId)
+              if (selectedLocation) setLocationTheme(selectedLocation.name)
+            }}
             className="rounded-lg border border-border bg-white px-3 py-2 text-sm"
           >
             {locations.map((loc) => (

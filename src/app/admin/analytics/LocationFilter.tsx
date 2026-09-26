@@ -1,6 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useLocationTheme } from "../../portal/LocationThemeProvider"
 
 export default function LocationFilter({
   locations,
@@ -9,10 +11,22 @@ export default function LocationFilter({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { setLocationTheme } = useLocationTheme()
+
+  useEffect(() => {
+    const selectedLocationId = Number(searchParams.get("location"))
+    const selectedLocation = locations.find((location) => location.location_id === selectedLocationId)
+    if (selectedLocation) setLocationTheme(selectedLocation.name)
+  }, [locations, searchParams, setLocationTheme])
+
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value)
     else params.delete(key)
+    if (key === "location" && value) {
+      const selectedLocation = locations.find((location) => String(location.location_id) === value)
+      if (selectedLocation) setLocationTheme(selectedLocation.name)
+    }
     router.push(`/admin/analytics${params.toString() ? `?${params.toString()}` : ""}`)
   }
 

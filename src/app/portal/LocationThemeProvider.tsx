@@ -7,7 +7,7 @@ type LocationThemeContextValue = {
   setLocationTheme: (locationName: string) => void
 }
 
-const STORAGE_KEY = "worknest-member-location-theme"
+const MEMBER_STORAGE_KEY = "worknest-member-location-theme"
 const LocationThemeContext = createContext<LocationThemeContextValue | null>(null)
 
 const LOCATION_THEMES: Record<string, CSSProperties> = {
@@ -59,7 +59,8 @@ const LOCATION_THEMES: Record<string, CSSProperties> = {
 }
 
 function normalizeLocationName(locationName: string) {
-  return locationName.toLowerCase().replace(/\s+/g, "")
+  const normalizedName = locationName.toLowerCase().replace(/[\s_-]+/g, "")
+  return normalizedName === "hsrlayout" ? "hsr" : normalizedName
 }
 
 export function useLocationTheme() {
@@ -69,11 +70,15 @@ export function useLocationTheme() {
 }
 
 export default function LocationThemeProvider({
-  memberId,
+  scopeId,
+  storageKey = MEMBER_STORAGE_KEY,
+  cookiePath = "/portal",
   defaultLocationName,
   children,
 }: {
-  memberId: number | null
+  scopeId: number | null
+  storageKey?: string
+  cookiePath?: string
   defaultLocationName: string | null
   children: ReactNode
 }) {
@@ -82,12 +87,12 @@ export default function LocationThemeProvider({
   const setLocationTheme = useCallback((nextLocationName: string) => {
     if (LOCATION_THEMES[normalizeLocationName(nextLocationName)]) {
       setLocationName(nextLocationName)
-      if (memberId) {
-        const value = `${memberId}:${normalizeLocationName(nextLocationName)}`
-        document.cookie = `${STORAGE_KEY}=${value}; Path=/portal; Max-Age=31536000; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`
+      if (scopeId) {
+        const value = `${scopeId}:${normalizeLocationName(nextLocationName)}`
+        document.cookie = `${storageKey}=${value}; Path=${cookiePath}; Max-Age=31536000; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`
       }
     }
-  }, [memberId])
+  }, [cookiePath, scopeId, storageKey])
 
   const value = useMemo(() => ({ locationName, setLocationTheme }), [locationName, setLocationTheme])
   const theme = locationName ? LOCATION_THEMES[normalizeLocationName(locationName)] : undefined

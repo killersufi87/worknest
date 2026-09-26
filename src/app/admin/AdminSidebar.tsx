@@ -14,7 +14,7 @@ export default function AdminSidebar({ active, name, isAdmin = false }: { active
   const initial = name.charAt(0).toUpperCase()
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-[#18181A] px-6 py-10 text-white md:flex">
+    <aside className="hidden w-64 shrink-0 flex-col bg-[var(--sidebar)] px-6 py-10 text-white transition-colors duration-500 md:flex">
       <div className="mb-10 text-lg font-bold">WorkNest Admin</div>
       <nav className="flex flex-1 flex-col gap-1">
         {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => (

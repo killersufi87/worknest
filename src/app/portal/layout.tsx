@@ -35,7 +35,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   }
 
   return (
-    <LocationThemeProvider memberId={memberId} defaultLocationName={defaultLocationName}>
+    <LocationThemeProvider scopeId={memberId} defaultLocationName={defaultLocationName}>
       {children}
     </LocationThemeProvider>
   )
