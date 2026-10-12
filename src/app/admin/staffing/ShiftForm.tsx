@@ -11,7 +11,7 @@ export default function ShiftForm({ locations, staff }: { locations: Location[];
 
   return (
     <form action={action} className="mb-8 rounded-xl border border-border bg-white p-5">
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <label className="text-xs text-muted">
           Staff
           <select name="employee_id" required className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm">

@@ -33,15 +33,15 @@ export default async function InvoicesPage() {
     .reduce((sum, b) => sum + (b.amount ?? 0), 0)
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <AdminSidebar active="invoices" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
-      <main className="relative z-10 flex-1 px-10 py-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Billing</p>
         <h1 className="mb-8 text-3xl font-bold text-foreground">Invoice Management</h1>
 
-        <div className="mb-10 grid grid-cols-2 gap-8 border-y border-border py-6 md:grid-cols-3">
+        <div className="mb-10 grid grid-cols-1 gap-5 border-y border-border py-6 sm:grid-cols-3 sm:gap-8">
           <div>
             <p className="text-3xl font-bold text-foreground">₹{totalRevenue}</p>
             <p className="text-sm text-muted">Total revenue</p>
@@ -52,8 +52,8 @@ export default async function InvoicesPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border bg-white">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-border bg-white">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
               <tr>
                 <th className="px-5 py-3">Date</th>

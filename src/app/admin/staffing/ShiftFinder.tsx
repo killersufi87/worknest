@@ -66,33 +66,35 @@ export default function ShiftFinder({ locations }: { locations: Location[] }) {
       )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
-            <tr>
-              <th className="px-5 py-3">Staff</th>
-              <th className="px-5 py-3">Designation</th>
-              <th className="px-5 py-3">Process Certified</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shifts.map((s) => (
-              <tr key={s.shift_id} className="border-b border-border last:border-0">
-                <td className="px-5 py-3 text-foreground">{s.name}</td>
-                <td className="px-5 py-3 text-muted">{ROLE_LABELS[s.role] ?? s.role}</td>
-                <td className="px-5 py-3">
-                  {s.certification ? (
-                    <span className="rounded-full bg-[var(--status-confirmed-bg)] px-2.5 py-1 text-xs font-medium text-[var(--status-confirmed-fg)]">Yes</span>
-                  ) : (
-                    <span className="rounded-full bg-[var(--status-booked-bg)] px-2.5 py-1 text-xs font-medium text-[var(--status-booked-fg)]">No</span>
-                  )}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
+              <tr>
+                <th className="px-5 py-3">Staff</th>
+                <th className="px-5 py-3">Designation</th>
+                <th className="px-5 py-3">Process Certified</th>
               </tr>
-            ))}
-            {shifts.length === 0 && (
-              <tr><td colSpan={3} className="px-5 py-8 text-center text-muted">No shifts scheduled for this date.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {shifts.map((s) => (
+                <tr key={s.shift_id} className="border-b border-border last:border-0">
+                  <td className="px-5 py-3 text-foreground">{s.name}</td>
+                  <td className="px-5 py-3 text-muted">{ROLE_LABELS[s.role] ?? s.role}</td>
+                  <td className="px-5 py-3">
+                    {s.certification ? (
+                      <span className="rounded-full bg-[var(--status-confirmed-bg)] px-2.5 py-1 text-xs font-medium text-[var(--status-confirmed-fg)]">Yes</span>
+                    ) : (
+                      <span className="rounded-full bg-[var(--status-booked-bg)] px-2.5 py-1 text-xs font-medium text-[var(--status-booked-fg)]">No</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {shifts.length === 0 && (
+                <tr><td colSpan={3} className="px-5 py-8 text-center text-muted">No shifts scheduled for this date.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

@@ -59,19 +59,19 @@ export default function TopBar({
   }
 
   return (
-    <div className="flex items-center justify-between border-b border-border px-10 py-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6 lg:px-10 lg:py-4">
       <input
         type="text"
         placeholder="Search spaces, locations…"
-        className="w-72 rounded-lg border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary"
+        className="hidden w-72 rounded-lg border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary sm:block"
       />
 
-      <div className="flex items-center gap-4">
+      <div className="ml-auto flex items-center gap-3 sm:gap-4">
         {/* Location switcher */}
         <div className="relative" ref={locationRef}>
           <button
             onClick={() => setLocationOpen((v) => !v)}
-            className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-foreground hover:bg-black/5"
+            className="max-w-44 truncate rounded-full border border-border bg-white px-3 py-2 text-xs font-medium text-foreground hover:bg-black/5 sm:max-w-none"
           >
             📍 {themedLocationName ?? locationName} {pending ? "…" : "▾"}
           </button>

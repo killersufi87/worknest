@@ -38,15 +38,15 @@ export default async function AdminPage() {
     .lte("start_time", `${today}T23:59:59+00:00`)
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <AdminSidebar active="grid" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
-      <main className="relative z-10 flex-1 px-10 py-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Overview</p>
-        <h1 className="mb-8 text-3xl font-bold text-foreground">See the whole workspace at once.</h1>
+        <h1 className="mb-8 text-2xl font-bold text-foreground sm:text-3xl">See the whole workspace at once.</h1>
 
-        <div className="mb-10 grid grid-cols-2 gap-8 border-y border-border py-6 md:grid-cols-3">
+        <div className="mb-10 grid grid-cols-1 gap-5 border-y border-border py-6 sm:grid-cols-3 sm:gap-8">
           <div>
             <p className="text-3xl font-bold text-foreground">{totalConfirmedToday ?? 0}</p>
             <p className="text-sm text-muted">Confirmed bookings today</p>
@@ -62,7 +62,7 @@ export default async function AdminPage() {
         </div>
 
         <h2 className="mb-4 text-lg font-semibold text-foreground">Live Booking Grid</h2>
-        <div className="rounded-xl border border-border bg-white p-6">
+        <div className="rounded-xl border border-border bg-white p-4 sm:p-6">
           <GridViewer locations={locations ?? []} />
         </div>
       </main>

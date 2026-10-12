@@ -104,18 +104,18 @@ export default function BookingsList({ bookings }: { bookings: Booking[] }) {
       {bookings.map((b) => (
         <div
           key={b.booking_id}
-          className="flex items-center justify-between rounded-xl border border-border bg-white px-5 py-4"
+          className="flex flex-col gap-3 rounded-xl border border-border bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
         >
-          <div>
+          <div className="min-w-0">
             <p className="font-medium capitalize text-foreground">{b.resource_type.replace("_", " ")}</p>
-            <p className="text-sm text-muted">
+            <p className="break-words text-sm text-muted">
               Booking #{b.booking_id} · {formatBookingTime(b.start_time)} – {formatBookingTime(b.end_time)} IST
             </p>
             <p className="text-sm text-muted">
               {b.location_name} · ₹{(b.amount ?? 0).toFixed(2)}
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end sm:gap-4">
             <span className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${STATUS_STYLES[b.status] ?? ""}`}>
               {b.status}
             </span>

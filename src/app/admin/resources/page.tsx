@@ -41,11 +41,11 @@ export default async function ResourcesPage() {
   const locationName = (employee.locations as unknown as { name: string } | null)?.name ?? "—"
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <AdminSidebar active="resources" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
 
-      <main className="relative z-10 flex-1 px-10 py-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{locationName}</p>
         <h1 className="mb-8 text-3xl font-bold text-foreground">Manage Resources &amp; Pricing</h1>
         <ResourceManager resources={resources} locationName={locationName} />

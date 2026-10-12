@@ -113,10 +113,10 @@ export default async function AnalyticsPage({
   }).join(" ")
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <AdminSidebar active="analytics" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
-      <main className="relative z-10 flex-1 px-6 py-8 lg:px-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
             <div>

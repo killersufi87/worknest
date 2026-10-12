@@ -165,8 +165,8 @@ export default function GridViewer({ locations }: { locations: Location[] }) {
           </div>
         </>
       )}
-      <div className="mt-8 rounded-2xl border border-[#B8CDB5]/60 bg-[#E4EFE7]/75 p-5">
-        <div className="mb-4 flex items-end justify-between">
+      <div className="mt-8 rounded-2xl border border-[#B8CDB5]/60 bg-[#E4EFE7]/75 p-3 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-primary">Upcoming bookings</h3>
             <p className="text-xs text-muted">Live view · refreshes every 10 seconds</p>

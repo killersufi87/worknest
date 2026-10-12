@@ -38,14 +38,14 @@ export default async function BillingPage() {
   const tierName = (member.membership_tiers as unknown as { tier_name: string } | null)?.tier_name ?? "Regular"
 
   return (
-    <div className="relative flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen flex-col bg-background lg:flex-row">
       <Sidebar active="billing" name={member.name} tierName={tierName} />
       <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
-      <main className="relative z-10 flex-1 px-10 py-10">
-        <h1 className="mb-8 text-3xl font-bold text-foreground">Billing &amp; Invoices</h1>
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+        <h1 className="mb-8 text-2xl font-bold text-foreground sm:text-3xl">Billing &amp; Invoices</h1>
 
-        <div className="mb-10 grid grid-cols-2 gap-8 border-y border-border py-6">
+        <div className="mb-10 grid grid-cols-1 gap-5 border-y border-border py-6 sm:grid-cols-2 sm:gap-8">
           <div>
             <p className="text-3xl font-bold text-foreground">₹{totalCharged.toFixed(2)}</p>
             <p className="text-sm text-muted">Total charged</p>
@@ -58,8 +58,8 @@ export default async function BillingPage() {
 
         <h2 className="mb-4 text-lg font-semibold text-foreground">Transaction History</h2>
         {bookings && bookings.length > 0 ? (
-          <div className="overflow-hidden rounded-xl border border-border bg-white">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-border bg-white">
+            <table className="w-full min-w-[560px] text-sm">
               <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
                 <tr>
                   <th className="px-5 py-3">Date</th>

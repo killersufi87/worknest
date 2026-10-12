@@ -24,10 +24,10 @@ export default async function MembershipsPage() {
   if (employeeError) throw new Error(employeeError.message)
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <AdminSidebar active="memberships" name={employee.name} isAdmin />
       <PortalBackdrop image="photo-1498049860654-af1a5c566876" />
-      <main className="relative z-10 flex-1 px-10 py-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Admin settings</p>
         <h1 className="mb-2 text-3xl font-bold text-foreground">Membership Plans</h1>
         <p className="mb-8 max-w-3xl text-sm text-muted">

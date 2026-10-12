@@ -83,25 +83,27 @@ export default function ResourceManager({ resources, locationName }: { resources
   return (
     <div className="space-y-10">
       <div className="overflow-hidden rounded-xl border border-border bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
-            <tr>
-              <th className="px-4 py-3">Resource ID</th>
-              <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Capacity</th>
-              <th className="px-4 py-3">Min. Duration</th>
-              <th className="px-4 py-3">Hourly</th>
-              <th className="px-4 py-3">Monthly</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {resources.map((r) => (
-              <ResourceRow key={r.resource_id} resource={r} locationName={locationName} />
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
+            <thead className="border-b border-border bg-black/[0.02] text-left text-xs uppercase text-muted">
+              <tr>
+                <th className="px-4 py-3">Resource ID</th>
+                <th className="px-4 py-3">Location</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Capacity</th>
+                <th className="px-4 py-3">Min. Duration</th>
+                <th className="px-4 py-3">Hourly</th>
+                <th className="px-4 py-3">Monthly</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {resources.map((r) => (
+                <ResourceRow key={r.resource_id} resource={r} locationName={locationName} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border bg-white p-6">

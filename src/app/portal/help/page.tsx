@@ -27,11 +27,11 @@ export default async function HelpPage() {
   const tierName = (member.membership_tiers as unknown as { tier_name: string } | null)?.tier_name ?? "Regular"
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <Sidebar active="help" name={member.name} tierName={tierName} />
       <PortalBackdrop image="photo-1498049860654-af1a5c566876" />
 
-      <main className="relative z-10 flex-1 px-10 py-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <h1 className="mb-8 text-3xl font-bold text-foreground">Help &amp; Support</h1>
         <HelpForm />
 

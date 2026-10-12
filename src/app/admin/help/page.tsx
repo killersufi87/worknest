@@ -26,11 +26,11 @@ export default async function AdminHelpPage() {
   const openCount = (queries ?? []).filter((q) => q.status === "open").length
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background lg:flex-row">
       <AdminSidebar active="help" name={employee.name} isAdmin={employee.role === "admin"} />
       <PortalBackdrop image="photo-1700163080760-12c275d3fe36" />
 
-      <main className="relative z-10 flex-1 px-10 py-10">
+      <main className="relative z-10 min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Support</p>
         <h1 className="mb-2 text-3xl font-bold text-foreground">Help &amp; Support Queries</h1>
         <p className="mb-8 text-sm text-muted">{openCount} open {openCount === 1 ? "query" : "queries"}</p>

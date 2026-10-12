@@ -82,7 +82,7 @@ export default async function PortalPage() {
   const activity = [...bookingActivity, ...cancellationActivity].slice(0, 3)
 
   return (
-    <div className="relative flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen flex-col bg-background lg:flex-row">
       <Sidebar active="dashboard" name={member.name} tierName={tierName} />
       <PortalBackdrop image="photo-1758518730083-4c12527b6742" />
 
@@ -94,13 +94,13 @@ export default async function PortalPage() {
           activity={activity}
         />
 
-        <div className="px-10 py-10">
+        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
           <div className="mb-10 flex items-start justify-between gap-8">
             <div>
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">
                 Good {timeOfDay()}, {firstName}
               </p>
-              <h1 className="max-w-md text-4xl font-bold leading-tight text-foreground">
+              <h1 className="max-w-md text-3xl font-bold leading-tight text-foreground sm:text-4xl">
                 A better place to get work done.
               </h1>
             </div>
@@ -126,7 +126,7 @@ export default async function PortalPage() {
             </span>
           </div>
 
-          <div className="mb-10 grid grid-cols-3 gap-8 border-y border-border py-6">
+          <div className="mb-10 grid grid-cols-1 gap-5 border-y border-border py-6 sm:grid-cols-3 sm:gap-8">
             <div>
               <p className="text-3xl font-bold text-foreground"><CountUp value={member.remaining_monthly_hours} /></p>
               <p className="text-sm text-muted">Hours remaining</p>
